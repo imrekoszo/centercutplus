@@ -19,148 +19,15 @@
 *                                                                              *
 *******************************************************************************/
 
-
-typedef signed __int64		sint64;
-typedef unsigned __int64	uint64;
-typedef signed int			sint32;
-typedef unsigned int		uint32;
-typedef signed short		sint16;
-typedef unsigned short		uint16;
-typedef signed char			sint8;
-typedef unsigned char		uint8;
-
-typedef sint64				int64;
-typedef sint32				int32;
-typedef sint16				int16;
-typedef sint8				int8;
-
-
-
-#include <windows.h>
-#include <math.h>
+#include "general.h"
 #include "winamp_dsp.h"
+#include "PositionHelper.h"
+#include "configwindow.h"
+#include "dsp_centercut.h"
+#include <math.h>
 
-
-
-bool			mInitialized = false;
-HANDLE			hMutexRunning = 0;
-HINSTANCE		hDummy;
-
-const int		kWindowSize = 8192;
-const int		kOverlapCount = 4;
-const int		kPostWindowPower = 2;  // Maximum power including pre-window is kOverlapCount-1,
-									   // which means this can be kOverlapCount-2 at most
-const int		kHalfWindow = kWindowSize / 2;
-const int		kOverlapSize = kWindowSize / kOverlapCount;
-
-const double	twopi = 6.283185307179586476925286766559;
-const double	invsqrt2 = 0.70710678118654752440084436210485;
-const double	nodivbyzero = 0.000000000000001;
-
-const int		BYTES_TO_DOUBLE = 0;
-const int		DOUBLE_TO_BYTES = 1;
-
-const int		mOutputSampleCount = kOverlapSize;
-const int		mOutputMaxBuffers = 32;
-int				mOutputReadSampleOffset;
-int				mOutputBufferCount;  // How many buffers are actually in use (there may be more
-									 // allocated than in use)
-double			*mOutputBuffer[mOutputMaxBuffers];
-
-int				mSampleRate;
-bool			mOutputCenter;
-bool			mBassToSides;
-int				mOutputDiscardBlocks;
-uint32			mInputSamplesNeeded;
-uint32			mInputPos;
-unsigned		mBitRev[kWindowSize];
-double			mPreWindow[kWindowSize];
-double			mPostWindow[kWindowSize];
-double			mSineTab[kWindowSize];
-double			mInput[kWindowSize][2];
-double			mOverlapC[kOverlapCount-1][kOverlapSize];
-double			mTempLBuffer[kWindowSize];
-double			mTempRBuffer[kWindowSize];
-double			mTempCBuffer[kWindowSize];
-
-
-void Lock(bool bRunning);
-winampDSPModule *GetModule(int which);
-void Config(struct winampDSPModule *thisModule);
-int Init_CenterCut(struct winampDSPModule *thisModule);
-int Init_Other(struct winampDSPModule *thisModule);
-void Quit_CenterCut(struct winampDSPModule *thisModule);
-void Quit_Other(struct winampDSPModule *thisModule);
-void DelayDLLUnload(HMODULE hDllInstance);
-int ModifySamples_Sides(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate);
-int ModifySamples_Center(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate);
-int ModifySamples_SidesBTS(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate);
-int ModifySamples_CenterBTS(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate);
-int ModifySamples_Classic(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate);
-int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSamples, int bitsPerSample, int sampleRate, bool outputCenter, bool bassToSides);
-void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int bitsPerSample, int chanCount);
-void OutputBufferInit();
-void OutputBufferFree();
-void OutputBufferReadComplete();
-bool OutputBufferBeginWrite();
-bool BPSIsValid(int bitsPerSample);
-bool CenterCut_Start();
-void CenterCut_Finish();
-bool CenterCut_Run();
-
-
-winampDSPHeader dspHeader = { DSP_HDRVER, "Center Cut v1.4.0", GetModule };
-
-winampDSPModule modSide = {
-	"Center Cut - Sides",
-	NULL,
-	NULL,
-	Config,
-	Init_CenterCut,
-	ModifySamples_Sides,
-	Quit_CenterCut
-};
-
-winampDSPModule modCenter = {
-	"Center Cut - Center",
-	NULL,
-	NULL,
-	Config,
-	Init_CenterCut,
-	ModifySamples_Center,
-	Quit_CenterCut
-};
-
-winampDSPModule modSideBTS = {
-	"Center Cut - Sides (Bass to Sides)",
-	NULL,
-	NULL,
-	Config,
-	Init_CenterCut,
-	ModifySamples_SidesBTS,
-	Quit_CenterCut
-};
-
-winampDSPModule modCenterBTS = {
-	"Center Cut - Center (Bass to Sides)",
-	NULL,
-	NULL,
-	Config,
-	Init_CenterCut,
-	ModifySamples_CenterBTS,
-	Quit_CenterCut
-};
-
-winampDSPModule modClassic = {
-	"Classic Vocal Remover",
-	NULL,
-	NULL,
-	Config,
-	Init_Other,
-	ModifySamples_Classic,
-	Quit_Other
-};
-
+// NOTE: disable stupid enum warning
+#pragma warning(disable : 4482)
 
 void Lock(bool bRunning) {
 	if (bRunning) {
@@ -174,6 +41,7 @@ void Lock(bool bRunning) {
 BOOL WINAPI DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved) {
 	switch (ul_reason_for_call) {
 		case DLL_PROCESS_ATTACH:
+			mDllHandle = static_cast<HINSTANCE>(hInst);
 			hMutexRunning = CreateMutex(NULL, FALSE, NULL);
 			break;
 		case DLL_PROCESS_DETACH:
@@ -192,11 +60,8 @@ extern "C" {
 
 winampDSPModule *GetModule(int which) {
 	switch (which) {
-		case 0: return &modSide;
-		case 1: return &modCenter;
-		case 2: return &modSideBTS;
-		case 3: return &modCenterBTS;
-		case 4: return &modClassic;
+		case 0: return &MODE_0;
+		case 1: return &MODE_1;
 		default: return NULL;
 	}
 }
@@ -205,6 +70,7 @@ int Init_CenterCut(struct winampDSPModule *thisModule) {
 	Lock(true);
 	OutputBufferInit();
 	CenterCut_Start();
+	ConfigWindow::CreateConfigWindow(mDllHandle, thisModule->hwndParent);
 	mInitialized = true;
 	Lock(false);
 	return 0;
@@ -214,6 +80,7 @@ void Quit_CenterCut(struct winampDSPModule *thisModule) {
 	Lock(true);
 	CenterCut_Finish();
 	OutputBufferFree();
+	ConfigWindow::DestroyConfigWindow();
 	mInitialized = false;
 	DelayDLLUnload(thisModule->hDllInstance);
 	Lock(false);
@@ -226,8 +93,11 @@ int Init_Other(struct winampDSPModule *thisModule) {
 void Quit_Other(struct winampDSPModule *thisModule) {
 }
 
-void Config(struct winampDSPModule *thisModule) {
-	MessageBox(thisModule->hwndParent, "dsp_centercut v1.4.0\n"
+void About(struct winampDSPModule *thisModule) {
+	MessageBox(thisModule->hwndParent, "dsp_centercut plus v10.24.0.0\n"
+									   "Copyright 2010 Ngetal\n"
+									   "https://code.google.com/p/centercutplus/\n\n"
+									   "Based on dsp_centercut v1.4.0\n"
 									   "Copyright 2004-2007 Moitah\n"
 									   "http://www.moitah.net\n\n"
 									   "Based on VirtualDub's Center Cut filter by Avery Lee.",
@@ -250,71 +120,18 @@ void DelayDLLUnload(HMODULE hDllInstance) {
 		DWORD threadID;
 		HANDLE hThread;
 
-		hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)UnloadDLL, 0, 0, &threadID);
+		hThread = CreateThread(NULL, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(UnloadDLL), 0, 0, &threadID);
 		CloseHandle(hThread);
 	}
 }
 
-int ModifySamples_Sides(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate) {
-	Lock(true);
-	if ((chanCount == 2) && (sampleCount > 0) && BPSIsValid(bitsPerSample) && mInitialized) {
-		int outSampleCount = CenterCutProcessSamples(samples, sampleCount, samples, bitsPerSample, sampleRate, false, false);
-
-		if (outSampleCount >= 0) {
-			sampleCount = outSampleCount;
-		}
-	}
-	Lock(false);
-
-	return sampleCount;
-}
-
-int ModifySamples_Center(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate) {
-	Lock(true);
-	if ((chanCount == 2) && (sampleCount > 0) && BPSIsValid(bitsPerSample) && mInitialized) {
-		int outSampleCount = CenterCutProcessSamples(samples, sampleCount, samples, bitsPerSample, sampleRate, true, false);
-
-		if (outSampleCount >= 0) {
-			sampleCount = outSampleCount;
-		}
-	}
-	Lock(false);
-
-	return sampleCount;
-}
-
-int ModifySamples_SidesBTS(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate) {
-	Lock(true);
-	if ((chanCount == 2) && (sampleCount > 0) && BPSIsValid(bitsPerSample) && mInitialized) {
-		int outSampleCount = CenterCutProcessSamples(samples, sampleCount, samples, bitsPerSample, sampleRate, false, true);
-
-		if (outSampleCount >= 0) {
-			sampleCount = outSampleCount;
-		}
-	}
-	Lock(false);
-
-	return sampleCount;
-}
-
-int ModifySamples_CenterBTS(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate) {
-	Lock(true);
-	if ((chanCount == 2) && (sampleCount > 0) && BPSIsValid(bitsPerSample) && mInitialized) {
-		int outSampleCount = CenterCutProcessSamples(samples, sampleCount, samples, bitsPerSample, sampleRate, true, true);
-
-		if (outSampleCount >= 0) {
-			sampleCount = outSampleCount;
-		}
-	}
-	Lock(false);
-
-	return sampleCount;
-}
-
-int ModifySamples_Classic(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate) {
+int ModifySamples_Classic(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample,
+						  int chanCount, int sampleRate)
+{
 	Lock(true);
 	if ((chanCount == 2) && sampleCount && BPSIsValid(bitsPerSample)) {
-		double *sampD = new double[sampleCount*chanCount];
+		std::vector<double> sampDVector(sampleCount*chanCount);
+		double *sampD = &(sampDVector[0]);
 		double *tmp = sampD;
 
 		ConvertSamples(BYTES_TO_DOUBLE, samples, sampD, sampleCount, bitsPerSample, chanCount);
@@ -326,26 +143,38 @@ int ModifySamples_Classic(struct winampDSPModule *thisModule, uint8 *samples, in
 		}
 
 		ConvertSamples(DOUBLE_TO_BYTES, samples, sampD, sampleCount, bitsPerSample, chanCount);
-
-		delete[] sampD;
 	}
 	Lock(false);
 
 	return sampleCount;
 }
 
-int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSamples, int bitsPerSample, int sampleRate, bool outputCenter, bool bassToSides) {
+int ModifySamples(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount,
+				  int sampleRate)
+{
+	Lock(true);
+	if ((chanCount == 2) && (sampleCount > 0) && BPSIsValid(bitsPerSample) && mInitialized && !Config::IsBypassed()) {
+		int outSampleCount = CenterCutProcessSamples(samples, sampleCount, samples, bitsPerSample, sampleRate);
+
+		if (outSampleCount >= 0) {
+			sampleCount = outSampleCount;
+		}
+	}
+	Lock(false);
+
+	return sampleCount;
+}
+
+int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSamples, int bitsPerSample, int sampleRate) {
 	int bytesPerSample, outSampleCount, maxOutSampleCount, copyCount;
 
 	mSampleRate = sampleRate;
-	mOutputCenter = outputCenter;
-	mBassToSides = bassToSides;
 	bytesPerSample = bitsPerSample / 8;
 	outSampleCount = 0;
 	maxOutSampleCount = inSampleCount;
 
 	while (inSampleCount > 0) {
-		copyCount = min((int)mInputSamplesNeeded, inSampleCount);
+		copyCount = min(static_cast<int>(mInputSamplesNeeded), inSampleCount);
 
 		ConvertSamples(BYTES_TO_DOUBLE, inSamples, &mInput[mInputPos][0], copyCount, bitsPerSample, 2);
 
@@ -399,7 +228,7 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 
 		while (sampB < max) {
 			tempI = (*((sint32*)sampB) << shiftCount) ^ xor;
-			*sampD = (double)tempI * SampleScale;
+			*sampD = static_cast<double>(tempI) * SampleScale;
 
 			sampB += bytesPerSample;
 			sampD += 1;
@@ -424,10 +253,10 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 				}
 				tempD -= 0.5;
 			}
-			tempI = (uint32)((sint32)tempD ^ xor) >> shiftCount;
+			tempI = static_cast<uint32>(static_cast<sint32>(tempD) ^ xor) >> shiftCount;
 
 			if (sampB < maxw) {
-				*((uint32*)sampB) = tempI;
+				*(reinterpret_cast<uint32*>(sampB)) = tempI;
 			}
 			else {
 				memcpy(sampB, &tempI, bytesPerSample);
@@ -552,9 +381,9 @@ void VDCreateBitRevTable(unsigned *dst, int n) {
 void CreatePostWindow(double *dst, int windowSize, int power) {
 	const double powerIntegrals[8] = { 1.0, 1.0/2.0, 3.0/8.0, 5.0/16.0, 35.0/128.0,
 									   63.0/256.0, 231.0/1024.0, 429.0/2048.0 };
-	const double scalefac = (double)windowSize * (powerIntegrals[1] / powerIntegrals[power+1]);
+	const double scalefac = static_cast<double>(windowSize) * (powerIntegrals[1] / powerIntegrals[power+1]);
 
-	VDCreateRaisedCosineWindow(dst, windowSize, (double)power);
+	VDCreateRaisedCosineWindow(dst, windowSize, static_cast<double>(power));
 
 	for(int i=0; i<windowSize; ++i) {
 		dst[i] *= scalefac;
@@ -674,7 +503,8 @@ bool CenterCut_Start() {
 	memset(mInput, 0, sizeof mInput);
 	memset(mOverlapC, 0, sizeof mOverlapC);
 
-	double *tmp = new double[kWindowSize];
+	std::vector<double> tmpBuffer(kWindowSize);
+	double *tmp = &(tmpBuffer[0]);
 	if (!tmp) return false;
 	VDCreateRaisedCosineWindow(tmp, kWindowSize, 1.0);
 	for(unsigned i=0; i<kWindowSize; ++i) {
@@ -686,9 +516,8 @@ bool CenterCut_Start() {
 		// We omit the 0.5 in both the forward and reverse directions,
 		// so we have a 0.25 to put here.
 
-		mPreWindow[i] = tmp[mBitRev[i]] * 0.5 * (2.0 / (double)kOverlapCount);
+		mPreWindow[i] = tmp[mBitRev[i]] * 0.5 * (2.0 / static_cast<double>(kOverlapCount));
 	}
-	delete[] tmp;
 
 	CreatePostWindow(mPostWindow, kWindowSize, kPostWindowPower);
 
@@ -698,12 +527,11 @@ bool CenterCut_Start() {
 void CenterCut_Finish() {
 }
 
-bool CenterCut_Run() {
-	unsigned i;
-	int freqBelowToSides = (int)((200.0 / ((double)mSampleRate / kWindowSize)) + 0.5);
+bool CenterCut_Run()
+{
+	int i;
 
 	// copy to temporary buffer and FHT
-
 	for(i=0; i<kWindowSize; ++i) {
 		const unsigned j = mBitRev[i];
 		const unsigned k = (j + mInputPos) & (kWindowSize-1);
@@ -716,34 +544,46 @@ bool CenterCut_Run() {
 	VDComputeFHT(mTempLBuffer, kWindowSize, mSineTab);
 	VDComputeFHT(mTempRBuffer, kWindowSize, mSineTab);
 
-	// perform stereo separation
+	// read configuration from UI
+	Preset preset = Config::GetPreset();
+	int dividerFreq = static_cast<int>(
+		(PositionHelper::GetDividerFreq(preset.FreqSlider)/(static_cast<double>(mSampleRate) / kWindowSize)) + 0.5);
 
+	// perform stereo separation
 	mTempCBuffer[0] = 0;
 	mTempCBuffer[1] = 0;
-	for(i=1; i<kHalfWindow; i++) {
-		double lR = mTempLBuffer[i] + mTempLBuffer[kWindowSize-i];
-		double lI = mTempLBuffer[i] - mTempLBuffer[kWindowSize-i];
-		double rR = mTempRBuffer[i] + mTempRBuffer[kWindowSize-i];
-		double rI = mTempRBuffer[i] - mTempRBuffer[kWindowSize-i];
+	for(i = 1; i < kHalfWindow; i++)
+	{
+		// itt lehet a hiba!!
+		//bool keepCurrentInCenter = !preset.BassToSides || (i >= freqBelowToSides);
+		bool keepCurrentInCenter = preset.CenterModeSetting == CenterMode::None
+									|| preset.CenterModeSetting == CenterMode::LowToSides && (i >= dividerFreq)
+									|| preset.CenterModeSetting == CenterMode::HighToSides && (i < dividerFreq);
+		double cR = 0.0;
+		double cI = 0.0;
 
-		double sumR = lR + rR;
-		double sumI = lI + rI;
-		double diffR = lR - rR;
-		double diffI = lI - rI;
+		if(keepCurrentInCenter)
+		{
+			double lR = mTempLBuffer[i] + mTempLBuffer[kWindowSize-i];
+			double lI = mTempLBuffer[i] - mTempLBuffer[kWindowSize-i];
+			double rR = mTempRBuffer[i] + mTempRBuffer[kWindowSize-i];
+			double rI = mTempRBuffer[i] - mTempRBuffer[kWindowSize-i];
 
-		double sumSq = sumR*sumR + sumI*sumI;
-		double diffSq = diffR*diffR + diffI*diffI;
-		double alpha = 0.0;
+			double sumR = lR + rR;
+			double sumI = lI + rI;
+			double diffR = lR - rR;
+			double diffI = lI - rI;
 
-		if (sumSq > nodivbyzero) {
-			alpha = 0.5 - sqrt(diffSq / sumSq) * 0.5;
-		}
+			double sumSq = sumR*sumR + sumI*sumI;
+			double diffSq = diffR*diffR + diffI*diffI;
+			double alpha = 0.0;
 
-		double cR = sumR * alpha;
-		double cI = sumI * alpha;
+			if (sumSq > nodivbyzero) {
+				alpha = 0.5 - sqrt(diffSq / sumSq) * 0.5;
+			}
 
-		if (mBassToSides && (i < freqBelowToSides)) {
-			cR = cI = 0.0;
+			cR = sumR * alpha;
+			cI = sumI * alpha;
 		}
 
 		mTempCBuffer[mBitRev[i            ]] = cR + cI;
@@ -762,6 +602,7 @@ bool CenterCut_Run() {
 
 	// writeout
 
+
 	if (mOutputDiscardBlocks > 0) {
 		mOutputDiscardBlocks--;
 	}
@@ -777,14 +618,9 @@ bool CenterCut_Run() {
 			double l = mInput[mInputPos+i][0] - c;
 			double r = mInput[mInputPos+i][1] - c;
 
-			if (mOutputCenter) {
-				outBuffer[0] = c;
-				outBuffer[1] = c;
-			}
-			else {
-				outBuffer[0] = l;
-				outBuffer[1] = r;
-			}
+			PositionHelper positionHelper(preset, l, r, c);
+			outBuffer[0] = positionHelper.L();
+			outBuffer[1] = positionHelper.R();
 			outBuffer += 2;
 
 			// overlapping
