@@ -17,7 +17,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
 IDD_CONFIG DIALOGEX 0, 0, 244, 181
 STYLE DS_CENTER | DS_MODALFRAME | DS_SETFONT | WS_VISIBLE | WS_BORDER | WS_CAPTION | WS_DLGFRAME | WS_GROUP | WS_POPUP | WS_SYSMENU
 EXSTYLE WS_EX_WINDOWEDGE | WS_EX_APPWINDOW
-CAPTION "Center Cut Plus v10.24.0.0"
+CAPTION "Center Cut Plus v10.24.1.0"
 FONT 8, "Tahoma", 400, 0, 0
 {
     COMBOBOX        IDC_PRESET, 40, 5, 118, 104, WS_GROUP | WS_TABSTOP | WS_TABSTOP | CBS_DROPDOWN | CBS_HASSTRINGS | CBS_SORT
@@ -56,8 +56,8 @@ FONT 8, "Tahoma", 400, 0, 0
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
 Version VERSIONINFO
-    FILEVERSION     10,24,0,0
-    PRODUCTVERSION  10,24,0,0
+    FILEVERSION     10,24,1,0
+    PRODUCTVERSION  10,24,1,0
     FILEOS          VOS_NT_WINDOWS32
     FILETYPE        VFT_DLL
     FILESUBTYPE     VFT2_UNKNOWN
@@ -70,11 +70,11 @@ Version VERSIONINFO
         {
             VALUE "CompanyName", "Ngetal"
             VALUE "FileDescription", "Center Cut Plus plugin for Winamp/AIMP"
-            VALUE "FileVersion", "10.24.0.0"
+            VALUE "FileVersion", "10.24.1.0"
             VALUE "InternalName", "dsp_centercutplus.dll"
             VALUE "LegalCopyright", "Copyright 2010 Ngetal"
             VALUE "ProductName", "Center Cut Plus"
-            VALUE "ProductVersion", "10.24.0.0"
+            VALUE "ProductVersion", "10.24.1.0"
         }
     }
     BLOCK "VarFileInfo"

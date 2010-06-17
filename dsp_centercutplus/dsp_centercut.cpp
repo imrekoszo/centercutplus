@@ -94,7 +94,7 @@ void Quit_Other(struct winampDSPModule *thisModule) {
 }
 
 void About(struct winampDSPModule *thisModule) {
-	MessageBox(thisModule->hwndParent, "dsp_centercut plus v10.24.0.0\n"
+	MessageBox(thisModule->hwndParent, "dsp_centercut plus v10.24.1.0\n"
 									   "Copyright 2010 Ngetal\n"
 									   "https://code.google.com/p/centercutplus/\n\n"
 									   "Based on dsp_centercut v1.4.0\n"
