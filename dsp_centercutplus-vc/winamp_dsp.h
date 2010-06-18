@@ -1,9 +1,3 @@
-#ifndef WINAMP_DSP_H
-#define WINAMP_DSP_H
-
-#include "dsp_centercutplus_global.h"
-
-
 // DSP plugin interface
 
 // notes:
@@ -24,8 +18,7 @@ typedef struct winampDSPModule {
   // modify waveform samples: returns number of samples to actually write
   // (typically numsamples, but no more than twice numsamples, and no less than half numsamples)
   // numsamples should always be at least 128. should, but I'm not sure
-  int (*ModifySamples)(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount,
-                       int bitsPerSample, int chanCount, int sampleRate);
+  int (*ModifySamples)(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount, int bitsPerSample, int chanCount, int sampleRate);
 
   void (*Quit)(struct winampDSPModule *this_mod);    // called when unloading
 
@@ -43,5 +36,3 @@ typedef winampDSPHeader* (*winampDSPGetHeaderType)();
 
 // header version: 0x20 == 0.20 == winamp 2.0
 #define DSP_HDRVER 0x20
-
-#endif //WINAMP_DSP_H
