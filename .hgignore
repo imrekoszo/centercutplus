@@ -16,6 +16,7 @@ syntax: glob
 *.log
 *.ncb
 *.sdf
+*.opensdf
 *.nlb
 *.obj
 *.patch
