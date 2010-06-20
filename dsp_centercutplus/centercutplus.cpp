@@ -1,7 +1,6 @@
 #include "centercutplus.h"
 #include "winamp_dsp.h"
 #include <QMessageBox>
-#include "qwinwidget.h"
 
 // static init
 QMutex CenterCutPlus::_mutex;
@@ -33,8 +32,6 @@ winampDSPModule* CenterCutPlus::GetModule(int which)
 
 void CenterCutPlus::About(winampDSPModule* thisModule)
 {
-    QWinWidget parent(thisModule->hwndParent, NULL, 0);
-    QString title = "About";
     QString text = QString(LongName()) +
                    "\nCopyright 2010 Ngetal\n"
                    "https://code.google.com/p/centercutplus/\n\n"
@@ -42,32 +39,31 @@ void CenterCutPlus::About(winampDSPModule* thisModule)
                    "Copyright 2004-2007 Moitah\n"
                    "http://www.moitah.net\n\n"
                    "Based on VirtualDub's Center Cut filter by Avery Lee.";
-    parent.showCentered();
-    QMessageBox::about(&parent, title, text);
+
+    ::MessageBoxA(thisModule->hwndParent, text.toStdString().c_str(), "About", MB_OK);
 }
 
-int CenterCutPlus::Init(winampDSPModule* thisModule)
+int CenterCutPlus::Init(winampDSPModule*)
 {
     QMutexLocker lock(&_mutex);
 
-    // TODO: fill it!
+    // TODO: create config window
 
-    return 0;
+    return _engine.Init();
 }
 
-void CenterCutPlus::Quit(winampDSPModule* thisModule)
+void CenterCutPlus::Quit(winampDSPModule*)
 {
     QMutexLocker lock(&_mutex);
 
-    // TODO: fill it!
+    // TODO: destroy config window
+
+    _engine.Quit();
 }
 
-int CenterCutPlus::ModifySamples(winampDSPModule* thisModule, uint8* samples, int sampleCount,
+int CenterCutPlus::ModifySamples(winampDSPModule*, uint8* samples, int sampleCount,
                                  int bitsPerSample, int chanCount, int sampleRate)
 {
     QMutexLocker lock(&_mutex);
-
-    // TODO: fill it!
-
-    return sampleCount;
+    return _engine.ModifySamples(samples, sampleCount, bitsPerSample, chanCount, sampleRate);
 }

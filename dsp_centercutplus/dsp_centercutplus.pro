@@ -6,11 +6,9 @@ TEMPLATE = lib
 DEFINES += DSP_CENTERCUTPLUS_LIBRARY
 SOURCES += centercutplus.cpp \
     dllmain.cpp \
-    qwinwidget.cpp \
     centercutengine.cpp
 HEADERS += winamp_dsp.h \
     centercutplus.h \
     globals.h \
-    qwinwidget.h \
     centercutengine.h
 RESOURCES += 
