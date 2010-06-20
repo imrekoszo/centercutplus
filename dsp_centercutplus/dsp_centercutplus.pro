@@ -4,7 +4,6 @@
 TARGET = dsp_centercutplus
 TEMPLATE = lib
 DEFINES += DSP_CENTERCUTPLUS_LIBRARY
-SOURCES += dsp_centercutplus.cpp
-HEADERS += dsp_centercutplus.h \
-    dsp_centercutplus_global.h \
+SOURCES += dllmain.cpp
+HEADERS += dsp_centercutplus_global.h \
     winamp_dsp.h
