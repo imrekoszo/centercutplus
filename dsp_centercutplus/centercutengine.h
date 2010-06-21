@@ -2,29 +2,58 @@
 #define CENTERCUTENGINE_H
 
 #include "globals.h"
-#include <QVector>
 
 class CenterCutEngine
 {
+    // constants
+    enum
+    {
+        WindowSize = 8192,
+        OverlapCount = 4,
+        PostWindowPower = 2,
+        HalfWindow = WindowSize/2,
+        OverlapSize = OverlapCount/2,
+        BytesToDouble = 0,
+        DoubleToBytes = 1,
+        OutputSampleCount = OverlapSize,
+        MaxOutputBuffers = 32
+    };
+
+    static const double TwoPi;
+    static const double InvSqrt2;
+    static const double NoDivByZero;
+    // /constants
+
+    bool    _isInitialized;
+    int     _outputReadSampleOffset;
+    int     _outputBufferCount;  // How many buffers are actually in use (there may be more allocated than in use)
+    double* _outputBuffers[MaxOutputBuffers]; // NOTE: qvector or any advanced solution here?
+    int     _sampleRate;
+    int     _outputDiscardBlocks;
+    uint32  _inputSamplesNeeded;
+    uint32  _inputPos;
+    uint32  _bitRev[WindowSize];
+    double  _preWindow[WindowSize];
+    double  _postWindow[WindowSize];
+    double  _sineTab[WindowSize];
+    double  _input[WindowSize][2];
+    double  _overlapC[OverlapCount-1][OverlapSize];
+    double  _tempLBuffer[WindowSize];
+    double  _tempRBuffer[WindowSize];
+    double  _tempCBuffer[WindowSize];
+
     CenterCutEngine(const CenterCutEngine&) { }
 
-    static const int mOutputMaxBuffers;
-    int              mOutputReadSampleOffset;
-    int              mOutputBufferCount;  // How many buffers are actually in use
-                                          // (there may be more allocated than in use)
-
-    // TODO: QVector here? QVector<QPointer<QVector> > > ?
-    QVector<QVector<double> > mOutputBuffer;
-
 public:
-    CenterCutEngine() { }
+    CenterCutEngine() : _isInitialized(false) { }
     int Init();
     void Quit();
     int ModifySamples(uint8* samples, int sampleCount,
                       int bitsPerSample, int chanCount, int sampleRate);
 
 private:
-    void OutputBufferInit();
+    void InitOutputBuffer();
+    bool Start();
 };
 
 #endif // CENTERCUTENGINE_H
