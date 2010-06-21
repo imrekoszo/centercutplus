@@ -6,9 +6,11 @@ TEMPLATE = lib
 DEFINES += DSP_CENTERCUTPLUS_LIBRARY
 SOURCES += centercutplus.cpp \
     dllmain.cpp \
-    centercutengine.cpp
+    centercutengine.cpp \
+    configurationstore.cpp
 HEADERS += winamp_dsp.h \
     centercutplus.h \
     globals.h \
-    centercutengine.h
+    centercutengine.h \
+    configurationstore.h
 RESOURCES += 

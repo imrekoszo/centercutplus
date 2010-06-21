@@ -13,7 +13,7 @@ class CenterCutEngine
     int              mOutputBufferCount;  // How many buffers are actually in use
                                           // (there may be more allocated than in use)
 
-    // TODO: QVector here?
+    // TODO: QVector here? QVector<QPointer<QVector> > > ?
     QVector<QVector<double> > mOutputBuffer;
 
 public:
