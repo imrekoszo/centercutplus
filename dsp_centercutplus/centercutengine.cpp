@@ -1,9 +1,8 @@
 #include "centercutengine.h"
 #include <QVector>
+#include "ffengine.h"
 
 // initialization
-const double CenterCutEngine::TwoPi = 6.283185307179586476925286766559;
-const double CenterCutEngine::InvSqrt2 = 0.70710678118654752440084436210485;
 const double CenterCutEngine::NoDivByZero = 0.000000000000001;
 
 // engine implementation
@@ -11,7 +10,9 @@ const double CenterCutEngine::NoDivByZero = 0.000000000000001;
 int CenterCutEngine::Init()
 {
     InitOutputBuffer();
+    Start();
     _isInitialized = true;
+    return 0;
 }
 
 void CenterCutEngine::Quit()
@@ -35,37 +36,37 @@ void CenterCutEngine::InitOutputBuffer()
     _outputReadSampleOffset = 0;
 }
 
-//bool CenterCutEngine::Start()
-//{
-//    VDCreateBitRevTable(_bitRev, WindowSize);
-//    VDCreateHalfSineTable(_sineTab, WindowSize);
-//
-//    _inputSamplesNeeded = OverlapSize;
-//    _inputPos = 0;
-//
-//    _outputDiscardBlocks = OverlapCount - 1;
-//
-//    memset(_input, 0, sizeof _input);
-//    memset(_overlapC, 0, sizeof _overlapC);
-//
-//    QVector<double> tmpBuffer(WindowSize);
-//    double *tmp = &(tmpBuffer[0]);
-//    if (!tmp) return false;
-//    VDCreateRaisedCosineWindow(tmp, kWindowSize, 1.0);
-//    for(uint32 i = 0; i < kWindowSize; ++i)
-//    {
-//        // The correct Hartley<->FFT conversion is:
-//        //
-//        //	Fr(i) = 0.5(Hr(i) + Hi(i))
-//        //	Fi(i) = 0.5(Hr(i) - Hi(i))
-//        //
-//        // We omit the 0.5 in both the forward and reverse directions,
-//        // so we have a 0.25 to put here.
-//
-//        mPreWindow[i] = tmp[mBitRev[i]] * 0.5 * (2.0 / static_cast<double>(kOverlapCount));
-//    }
-//
-//    CreatePostWindow(mPostWindow, kWindowSize, kPostWindowPower);
-//
-//    return true;
-//}
+bool CenterCutEngine::Start()
+{
+    FFEngine::VDCreateBitRevTable(_bitRev, WindowSize);
+    FFEngine::VDCreateHalfSineTable(_sineTab, WindowSize);
+
+    _inputSamplesNeeded = OverlapSize;
+    _inputPos = 0;
+
+    _outputDiscardBlocks = OverlapCount - 1;
+
+    memset(_input, 0, sizeof _input);
+    memset(_overlapC, 0, sizeof _overlapC);
+
+    QVector<double> tmpBuffer(WindowSize);
+    double *tmp = &(tmpBuffer[0]);
+    if (!tmp) return false;
+    FFEngine::VDCreateRaisedCosineWindow(tmp, WindowSize, 1.0);
+    for(uint32 i = 0; i < WindowSize; ++i)
+    {
+        // The correct Hartley<->FFT conversion is:
+        //
+        //	Fr(i) = 0.5(Hr(i) + Hi(i))
+        //	Fi(i) = 0.5(Hr(i) - Hi(i))
+        //
+        // We omit the 0.5 in both the forward and reverse directions,
+        // so we have a 0.25 to put here.
+
+        _preWindow[i] = tmp[_bitRev[i]] * 0.5 * (2.0 / static_cast<double>(OverlapCount));
+    }
+
+    FFEngine::CreatePostWindow(_postWindow, WindowSize, PostWindowPower);
+
+    return true;
+}

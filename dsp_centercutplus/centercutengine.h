@@ -19,8 +19,6 @@ class CenterCutEngine
         MaxOutputBuffers = 32
     };
 
-    static const double TwoPi;
-    static const double InvSqrt2;
     static const double NoDivByZero;
     // /constants
 
