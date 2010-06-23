@@ -57,6 +57,7 @@ void CenterCutPlus::Quit(winampDSPModule*)
     QMutexLocker lock(&_mutex);
 
     // TODO: destroy config window
+    // TODO: DelayDllUnload(tököm);
 
     _engine.Quit();
 }

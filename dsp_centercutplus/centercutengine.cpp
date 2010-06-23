@@ -17,12 +17,27 @@ int CenterCutEngine::Init()
 
 void CenterCutEngine::Quit()
 {
-
+    FreeOutputBuffer();
+    _isInitialized = false;
 }
 
 int CenterCutEngine::ModifySamples(uint8* samples, int sampleCount,
                                    int bitsPerSample, int chanCount, int sampleRate)
 {
+    if (    (chanCount == 2)
+            && (sampleCount > 0)
+            && BPSIsValid(bitsPerSample)
+            && _isInitialized
+            && !Config::IsBypassed())
+    {
+        int outSampleCount =
+                CenterCutProcessSamples(samples, sampleCount, samples, bitsPerSample, sampleRate);
+
+        if (outSampleCount >= 0)
+        {
+            sampleCount = outSampleCount;
+        }
+    }
     return sampleCount;
 }
 
@@ -36,7 +51,19 @@ void CenterCutEngine::InitOutputBuffer()
     _outputReadSampleOffset = 0;
 }
 
-bool CenterCutEngine::Start()
+void CenterCutEngine::FreeOutputBuffer()
+{
+    for (int i = 0; i < MaxOutputBuffers; i++)
+    {
+        if (_outputBuffers[i])
+        {
+            delete[] _outputBuffers[i];
+            _outputBuffers[i] = 0;
+        }
+    }
+}
+
+void CenterCutEngine::Start()
 {
     FFEngine::VDCreateBitRevTable(_bitRev, WindowSize);
     FFEngine::VDCreateHalfSineTable(_sineTab, WindowSize);
@@ -51,7 +78,8 @@ bool CenterCutEngine::Start()
 
     QVector<double> tmpBuffer(WindowSize);
     double *tmp = &(tmpBuffer[0]);
-    if (!tmp) return false;
+    if (!tmp)
+        return;
     FFEngine::VDCreateRaisedCosineWindow(tmp, WindowSize, 1.0);
     for(uint32 i = 0; i < WindowSize; ++i)
     {
@@ -67,6 +95,60 @@ bool CenterCutEngine::Start()
     }
 
     FFEngine::CreatePostWindow(_postWindow, WindowSize, PostWindowPower);
+}
 
-    return true;
+bool CenterCutEngine::BPSIsValid(int bitsPerSample)
+{
+    // Bits per sample must be between 8 and 32 bits, and a multiple of 8
+    return (bitsPerSample >= 8) && (bitsPerSample <= 32) && ((bitsPerSample & 7) == 0);
+}
+
+int  CenterCutEngine::ProcessSamples(
+        uint8 *inSamples, int inSampleCount, uint8 *outSamples,
+        int bitsPerSample, int sampleRate)
+{
+    int bytesPerSample, outSampleCount, maxOutSampleCount, copyCount;
+
+    mSampleRate = sampleRate;
+    bytesPerSample = bitsPerSample / 8;
+    outSampleCount = 0;
+    maxOutSampleCount = inSampleCount;
+
+    while (inSampleCount > 0)
+    {
+        copyCount = min(static_cast<int>(mInputSamplesNeeded), inSampleCount);
+
+        ConvertSamples(BYTES_TO_DOUBLE, inSamples, &mInput[mInputPos][0], copyCount, bitsPerSample, 2);
+
+        inSamples += copyCount * bytesPerSample * 2;
+        inSampleCount -= copyCount;
+        mInputPos = (mInputPos + copyCount) & (kWindowSize-1);
+        mInputSamplesNeeded -= copyCount;
+
+        if (mInputSamplesNeeded == 0)
+        {
+            CenterCut_Run();
+        }
+    }
+
+    while ((mOutputBufferCount > 0) && (outSampleCount < maxOutSampleCount))
+    {
+        double *sampD = mOutputBuffer[0];
+        if (!sampD) return -1;
+
+        copyCount = min(mOutputSampleCount - mOutputReadSampleOffset,
+            maxOutSampleCount - outSampleCount);
+
+        ConvertSamples(DOUBLE_TO_BYTES, outSamples, sampD + (mOutputReadSampleOffset * 2), copyCount, bitsPerSample, 2);
+
+        outSamples += copyCount * bytesPerSample * 2;
+        outSampleCount += copyCount;
+        mOutputReadSampleOffset += copyCount;
+        if (mOutputReadSampleOffset == mOutputSampleCount)
+        {
+            OutputBufferReadComplete();
+        }
+    }
+
+    return outSampleCount;
 }

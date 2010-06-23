@@ -51,7 +51,11 @@ public:
 
 private:
     void InitOutputBuffer();
-    bool Start();
+    void FreeOutputBuffer();
+    void Start();
+    bool BPSIsValid(int bitsPerSample);
+    int  ProcessSamples(uint8 *inSamples, int inSampleCount,
+                        uint8 *outSamples, int bitsPerSample, int sampleRate);
 };
 
 #endif // CENTERCUTENGINE_H

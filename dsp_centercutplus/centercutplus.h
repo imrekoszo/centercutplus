@@ -11,6 +11,7 @@ struct winampDSPModule;
 // main application class
 class CenterCutPlus
 {
+    // TODO: move mutex into engine class
     static QMutex _mutex;
     static CenterCutEngine _engine;
 
