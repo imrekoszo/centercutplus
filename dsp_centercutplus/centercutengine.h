@@ -13,10 +13,11 @@ class CenterCutEngine
         PostWindowPower = 2,
         HalfWindow = WindowSize/2,
         OverlapSize = OverlapCount/2,
-        BytesToDouble = 0,
-        DoubleToBytes = 1,
         OutputSampleCount = OverlapSize,
-        MaxOutputBuffers = 32
+        MaxOutputBuffers = 32,
+
+        BytesToDouble = 0,
+        DoubleToBytes = 1
     };
 
     static const double NoDivByZero;
@@ -56,6 +57,8 @@ private:
     bool BPSIsValid(int bitsPerSample);
     int  ProcessSamples(uint8 *inSamples, int inSampleCount,
                         uint8 *outSamples, int bitsPerSample, int sampleRate);
+    void ConvertSamples(int type, uint8 *sampB, double *sampD,
+                        int sampleCount, int bitsPerSample, int chanCount);
 };
 
 #endif // CENTERCUTENGINE_H

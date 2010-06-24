@@ -22,4 +22,12 @@ typedef unsigned short      uint16;
 typedef signed char         int8;
 typedef unsigned char       uint8;
 
+#ifndef maximum
+#   define maximum(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef minimum
+#   define minimum(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
 #endif // DSP_CENTERCUTPLUS_GLOBAL_H
