@@ -3,6 +3,7 @@
 #include "ffengine.h"
 #include "globals.h"
 #include <math.h>
+#include <QApplication>
 
 // initialization
 const double CenterCutEngine::NoDivByZero = 0.000000000000001;
