@@ -9,13 +9,17 @@ SOURCES += centercutplus.cpp \
     centercutengine.cpp \
     configurationstore.cpp \
     ffengine.cpp \
-    centercutplusdialog.cpp
+    centercutplusdialog.cpp \
+    configuration.cpp \
+    dspsettings.cpp
 HEADERS += winamp_dsp.h \
     centercutplus.h \
     globals.h \
     centercutengine.h \
     configurationstore.h \
     ffengine.h \
-    centercutplusdialog.h
+    centercutplusdialog.h \
+    configuration.h \
+    dspsettings.h
 RESOURCES += 
 FORMS += centercutplusdialog.ui

@@ -18,6 +18,17 @@ protected:
 
 private:
     Ui::CenterCutPlusDialog *ui;
+
+public slots:
+    void addClicked();
+    void balanceModeChanged(int);
+    void balanceValueChanged(int);
+    void bypassStateChanged(int);
+    void centerManipulationChanged(int);
+    void cutModeValueChanged(int);
+    void freqValueChanged(int);
+    void presetSelectionChanged(int);
+    void removeClicked();
 };
 
 #endif // CENTERCUTPLUSDIALOG_H
