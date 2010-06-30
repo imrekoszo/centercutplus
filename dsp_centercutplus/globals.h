@@ -30,4 +30,12 @@ typedef unsigned char       uint8;
 #   define minimum(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
+
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+    TypeName(const TypeName&);             \
+    void operator=(const TypeName&)
+
+#define DISALLOW_INSTANTIATION(TypeName) \
+    TypeName()
+
 #endif // DSP_CENTERCUTPLUS_GLOBAL_H

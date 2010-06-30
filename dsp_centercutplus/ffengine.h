@@ -1,12 +1,12 @@
 #ifndef FFENGINE_H
 #define FFENGINE_H
 
+#include "globals.h"
+
 class FFEngine
 {
-    FFEngine() { }
-
-    static const double TwoPi;
-    static const double InvSqrt2;
+    DISALLOW_INSTANTIATION(FFEngine);
+    DISALLOW_COPY_AND_ASSIGN(FFEngine);
 
 public:
     static unsigned IntegerLog2(unsigned v);

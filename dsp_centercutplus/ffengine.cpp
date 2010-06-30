@@ -1,8 +1,11 @@
 #include "ffengine.h"
 #include "math.h"
 
-const double FFEngine::TwoPi = 6.283185307179586476925286766559;
-const double FFEngine::InvSqrt2 = 0.70710678118654752440084436210485;
+namespace
+{
+    const double kTwoPi = 6.283185307179586476925286766559;
+    const double kInvSqrt2 = 0.70710678118654752440084436210485;
+}
 
 unsigned FFEngine::IntegerLog2(unsigned v) {
     unsigned i = 0;

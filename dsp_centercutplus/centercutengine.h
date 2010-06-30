@@ -51,14 +51,17 @@ public:
                       int bitsPerSample, int chanCount, int sampleRate);
 
 private:
+    // TODO: move output buffer to separate class?
     void InitOutputBuffer();
     void FreeOutputBuffer();
+    void OutputBufferReadComplete();
     void Start();
     bool BPSIsValid(int bitsPerSample);
     int  ProcessSamples(uint8 *inSamples, int inSampleCount,
                         uint8 *outSamples, int bitsPerSample, int sampleRate);
     void ConvertSamples(int type, uint8 *sampB, double *sampD,
                         int sampleCount, int bitsPerSample, int chanCount);
+    void Run(); // TODO: rename?
 };
 
 #endif // CENTERCUTENGINE_H

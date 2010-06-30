@@ -66,6 +66,33 @@ void CenterCutEngine::FreeOutputBuffer()
     }
 }
 
+void CenterCutEngine::OutputBufferReadComplete()
+{
+    --_outputBufferCount;
+    _outputReadSampleOffset = 0;
+    if (_outputBufferCount > 0)
+    {
+        double *moveToEnd = _outputBuffers[0];
+
+        // Shift the buffers so that the current one for reading is at index 0
+        for (int i = 1; i < MaxOutputBuffers; ++i)
+        {
+            _outputBuffers[i - 1] = _outputBuffers[i];
+        }
+        _outputBuffers[MaxOutputBuffers - 1] = NULL;
+
+        // Move the previous first buffer to the end (first null pointer)
+        for (int i = 0; i < MaxOutputBuffers; ++i)
+        {
+            if (!_outputBuffers[i])
+            {
+                _outputBuffers[i] = moveToEnd;
+                break;
+            }
+        }
+    }
+}
+
 void CenterCutEngine::Start()
 {
     FFEngine::VDCreateBitRevTable(_bitRev, WindowSize);
@@ -228,4 +255,125 @@ void CenterCutEngine::ConvertSamples(int type, uint8 *sampB, double *sampD,
             sampD += 1;
         }
     }
+}
+
+void CenterCutEngine::Run()
+{
+    // copy to temporary buffer and FHT
+    for(int i = 0; i < WindowSize; ++i)
+    {
+        const unsigned j = mBitRev[i];
+        const unsigned k = (j + mInputPos) & (kWindowSize-1);
+        const double w = mPreWindow[i];
+
+        mTempLBuffer[i] = mInput[k][0] * w;
+        mTempRBuffer[i] = mInput[k][1] * w;
+    }
+
+    FFEngine::VDComputeFHT(mTempLBuffer, kWindowSize, mSineTab);
+    FFEngine::VDComputeFHT(mTempRBuffer, kWindowSize, mSineTab);
+
+    // read configuration from UI
+    Preset preset = Config::GetPreset();
+    int dividerFreq = static_cast<int>(
+        (PositionHelper::GetDividerFreq(preset.FreqSlider)/(static_cast<double>(mSampleRate) / kWindowSize)) + 0.5);
+
+    // perform stereo separation
+    mTempCBuffer[0] = 0;
+    mTempCBuffer[1] = 0;
+    for(int i = 1; i < kHalfWindow; ++i)
+    {
+        //bool keepCurrentInCenter = !preset.BassToSides || (i >= freqBelowToSides);
+        bool keepCurrentInCenter = preset.CenterModeSetting == CenterMode::None
+                                    || preset.CenterModeSetting == CenterMode::LowToSides && (i >= dividerFreq)
+                                    || preset.CenterModeSetting == CenterMode::HighToSides && (i < dividerFreq);
+        double cR = 0.0;
+        double cI = 0.0;
+
+        if(keepCurrentInCenter)
+        {
+            double lR = mTempLBuffer[i] + mTempLBuffer[kWindowSize-i];
+            double lI = mTempLBuffer[i] - mTempLBuffer[kWindowSize-i];
+            double rR = mTempRBuffer[i] + mTempRBuffer[kWindowSize-i];
+            double rI = mTempRBuffer[i] - mTempRBuffer[kWindowSize-i];
+
+            double sumR = lR + rR;
+            double sumI = lI + rI;
+            double diffR = lR - rR;
+            double diffI = lI - rI;
+
+            double sumSq = sumR*sumR + sumI*sumI;
+            double diffSq = diffR*diffR + diffI*diffI;
+            double alpha = 0.0;
+
+            if (sumSq > nodivbyzero)
+            {
+                alpha = 0.5 - sqrt(diffSq / sumSq) * 0.5;
+            }
+
+            cR = sumR * alpha;
+            cI = sumI * alpha;
+        }
+
+        mTempCBuffer[mBitRev[i            ]] = cR + cI;
+        mTempCBuffer[mBitRev[kWindowSize-i]] = cR - cI;
+    }
+
+    // reconstitute left/right/center channels
+
+    VDComputeFHT(mTempCBuffer, kWindowSize, mSineTab);
+
+    // apply post-window
+
+    for (int i = 0; i < WindowSize; ++i)
+    {
+        mTempCBuffer[i] *= mPostWindow[i];
+    }
+
+    // writeout
+
+
+    if (mOutputDiscardBlocks > 0)
+    {
+        mOutputDiscardBlocks--;
+    }
+    else
+    {
+        int currentBlockIndex, nextBlockIndex, blockOffset;
+
+        if (!OutputBufferBeginWrite()) return false;
+        double *outBuffer = mOutputBuffer[mOutputBufferCount - 1];
+        if (!outBuffer) return false;
+
+        for(int i = 0; i < OverlapSize; ++i)
+        {
+            double c = mOverlapC[0][i] + mTempCBuffer[i];
+            double l = mInput[mInputPos+i][0] - c;
+            double r = mInput[mInputPos+i][1] - c;
+
+            PositionHelper positionHelper(preset, l, r, c);
+            outBuffer[0] = positionHelper.L();
+            outBuffer[1] = positionHelper.R();
+            outBuffer += 2;
+
+            // overlapping
+
+            currentBlockIndex = 0;
+            nextBlockIndex = 1;
+            blockOffset = kOverlapSize;
+            while (nextBlockIndex < kOverlapCount - 1) {
+                mOverlapC[currentBlockIndex][i] = mOverlapC[nextBlockIndex][i] +
+                    mTempCBuffer[blockOffset + i];
+
+                currentBlockIndex++;
+                nextBlockIndex++;
+                blockOffset += kOverlapSize;
+            }
+            mOverlapC[currentBlockIndex][i] = mTempCBuffer[blockOffset + i];
+        }
+    }
+
+    mInputSamplesNeeded = kOverlapSize;
+
+    return true;
 }
