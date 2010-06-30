@@ -20,6 +20,7 @@ HEADERS += winamp_dsp.h \
     ffengine.h \
     centercutplusdialog.h \
     configuration.h \
-    dspsettings.h
+    dspsettings.h \
+    classhelpers.h
 RESOURCES += 
 FORMS += centercutplusdialog.ui

@@ -1,7 +1,20 @@
 #ifndef CENTERCUTENGINE_H
 #define CENTERCUTENGINE_H
 
-#include "globals.h"
+// standard headers
+#include <stdint.h>
+
+// local headers
+#include "classhelpers.h"
+
+// class-wide constants
+namespace Constants
+{
+    namespace CenterCutEngine
+    {
+
+    }
+}
 
 class CenterCutEngine
 {
@@ -10,10 +23,10 @@ class CenterCutEngine
     {
         WindowSize = 8192,
         OverlapCount = 4,
-        PostWindowPower = 2,
-        HalfWindow = WindowSize/2,
+        //PostWindowPower = 2,
+        //HalfWindow = WindowSize/2,
         OverlapSize = OverlapCount/2,
-        OutputSampleCount = OverlapSize,
+        //OutputSampleCount = OverlapSize,
         MaxOutputBuffers = 32,
 
         BytesToDouble = 0,
@@ -55,6 +68,7 @@ private:
     void InitOutputBuffer();
     void FreeOutputBuffer();
     void OutputBufferReadComplete();
+    bool OutputBufferBeginWrite();
     void Start();
     bool BPSIsValid(int bitsPerSample);
     int  ProcessSamples(uint8 *inSamples, int inSampleCount,

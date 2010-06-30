@@ -1,9 +1,12 @@
+// implements class
 #include "centercutengine.h"
-#include <QVector>
-#include "ffengine.h"
-#include "globals.h"
+
+// standard headers
 #include <math.h>
-#include <QApplication>
+
+// local headers
+#include "ffengine.h"
+
 
 // initialization
 const double CenterCutEngine::NoDivByZero = 0.000000000000001;
@@ -93,6 +96,28 @@ void CenterCutEngine::OutputBufferReadComplete()
     }
 }
 
+bool  CenterCutEngine::OutputBufferBeginWrite()
+{
+    if (_outputBufferCount == MaxOutputBuffers)
+    {
+        return false;
+    }
+
+    int i = _outputBufferCount;
+    if (!_outputBuffers[i])
+    {
+        // No buffer exists at this index, make a new one
+        _outputBuffers[i] = new double[OutputSampleCount*2];
+        if (!_outputBuffers[i])
+        {
+            return false;
+        }
+    }
+
+    ++_outputBufferCount;
+    return true;
+}
+
 void CenterCutEngine::Start()
 {
     FFEngine::VDCreateBitRevTable(_bitRev, WindowSize);
@@ -158,7 +183,7 @@ int  CenterCutEngine::ProcessSamples(
 
         if (_inputSamplesNeeded == 0)
         {
-            CenterCut_Run();
+            Run();
         }
     }
 
@@ -262,40 +287,44 @@ void CenterCutEngine::Run()
     // copy to temporary buffer and FHT
     for(int i = 0; i < WindowSize; ++i)
     {
-        const unsigned j = mBitRev[i];
-        const unsigned k = (j + mInputPos) & (kWindowSize-1);
-        const double w = mPreWindow[i];
+        const unsigned j = _bitRev[i];
+        const unsigned k = (j + _inputPos) & (WindowSize - 1);
+        const double w = _preWindow[i];
 
-        mTempLBuffer[i] = mInput[k][0] * w;
-        mTempRBuffer[i] = mInput[k][1] * w;
+        _tempLBuffer[i] = _input[k][0] * w;
+        _tempRBuffer[i] = _input[k][1] * w;
     }
 
-    FFEngine::VDComputeFHT(mTempLBuffer, kWindowSize, mSineTab);
-    FFEngine::VDComputeFHT(mTempRBuffer, kWindowSize, mSineTab);
+    FFEngine::VDComputeFHT(_tempLBuffer, WindowSize, _sineTab);
+    FFEngine::VDComputeFHT(_tempRBuffer, WindowSize, _sineTab);
 
     // read configuration from UI
     Preset preset = Config::GetPreset();
     int dividerFreq = static_cast<int>(
-        (PositionHelper::GetDividerFreq(preset.FreqSlider)/(static_cast<double>(mSampleRate) / kWindowSize)) + 0.5);
+            (PositionHelper::GetDividerFreq(preset.FreqSlider)
+                / (static_cast<double>(_sampleRate) / WindowSize)) + 0.5);
 
     // perform stereo separation
-    mTempCBuffer[0] = 0;
-    mTempCBuffer[1] = 0;
-    for(int i = 1; i < kHalfWindow; ++i)
+    _tempCBuffer[0] = 0;
+    _tempCBuffer[1] = 0;
+    for(int i = 1; i < HalfWindow; ++i)
     {
-        //bool keepCurrentInCenter = !preset.BassToSides || (i >= freqBelowToSides);
-        bool keepCurrentInCenter = preset.CenterModeSetting == CenterMode::None
-                                    || preset.CenterModeSetting == CenterMode::LowToSides && (i >= dividerFreq)
-                                    || preset.CenterModeSetting == CenterMode::HighToSides && (i < dividerFreq);
+        bool keepCurrentInCenter =
+                preset.CenterModeSetting == CenterMode::None
+                || preset.CenterModeSetting == CenterMode::LowToSides
+                    && (i >= dividerFreq)
+                || preset.CenterModeSetting == CenterMode::HighToSides
+                    && (i < dividerFreq);
+
         double cR = 0.0;
         double cI = 0.0;
 
         if(keepCurrentInCenter)
         {
-            double lR = mTempLBuffer[i] + mTempLBuffer[kWindowSize-i];
-            double lI = mTempLBuffer[i] - mTempLBuffer[kWindowSize-i];
-            double rR = mTempRBuffer[i] + mTempRBuffer[kWindowSize-i];
-            double rI = mTempRBuffer[i] - mTempRBuffer[kWindowSize-i];
+            double lR = _tempLBuffer[i] + _tempLBuffer[WindowSize - i];
+            double lI = _tempLBuffer[i] - _tempLBuffer[WindowSize - i];
+            double rR = _tempRBuffer[i] + _tempRBuffer[WindowSize - i];
+            double rI = _tempRBuffer[i] - _tempRBuffer[WindowSize - i];
 
             double sumR = lR + rR;
             double sumI = lI + rI;
@@ -306,50 +335,50 @@ void CenterCutEngine::Run()
             double diffSq = diffR*diffR + diffI*diffI;
             double alpha = 0.0;
 
-            if (sumSq > nodivbyzero)
+            if (sumSq > NoDivByZero)
             {
-                alpha = 0.5 - sqrt(diffSq / sumSq) * 0.5;
+                alpha = 0.5 - sqrt(diffSq/sumSq)*0.5;
             }
 
             cR = sumR * alpha;
             cI = sumI * alpha;
         }
 
-        mTempCBuffer[mBitRev[i            ]] = cR + cI;
-        mTempCBuffer[mBitRev[kWindowSize-i]] = cR - cI;
+        _tempCBuffer[_bitRev[i             ]] = cR + cI;
+        _tempCBuffer[_bitRev[WindowSize - i]] = cR - cI;
     }
 
     // reconstitute left/right/center channels
 
-    VDComputeFHT(mTempCBuffer, kWindowSize, mSineTab);
+    FFEngine::VDComputeFHT(_tempCBuffer, WindowSize, _sineTab);
 
     // apply post-window
 
     for (int i = 0; i < WindowSize; ++i)
     {
-        mTempCBuffer[i] *= mPostWindow[i];
+        _tempCBuffer[i] *= _postWindow[i];
     }
 
     // writeout
 
 
-    if (mOutputDiscardBlocks > 0)
+    if (_outputDiscardBlocks > 0)
     {
-        mOutputDiscardBlocks--;
+        _outputDiscardBlocks--;
     }
     else
     {
         int currentBlockIndex, nextBlockIndex, blockOffset;
 
-        if (!OutputBufferBeginWrite()) return false;
-        double *outBuffer = mOutputBuffer[mOutputBufferCount - 1];
-        if (!outBuffer) return false;
+        if (!OutputBufferBeginWrite()) return; // TODO: exception?
+        double *outBuffer = _outputBuffers[_outputBufferCount - 1];
+        if (!outBuffer) return; // TODO: exception?
 
         for(int i = 0; i < OverlapSize; ++i)
         {
-            double c = mOverlapC[0][i] + mTempCBuffer[i];
-            double l = mInput[mInputPos+i][0] - c;
-            double r = mInput[mInputPos+i][1] - c;
+            double c = _overlapC[0][i] + _tempCBuffer[i];
+            double l = _input[_inputPos + i][0] - c;
+            double r = _input[_inputPos + i][1] - c;
 
             PositionHelper positionHelper(preset, l, r, c);
             outBuffer[0] = positionHelper.L();
@@ -360,20 +389,21 @@ void CenterCutEngine::Run()
 
             currentBlockIndex = 0;
             nextBlockIndex = 1;
-            blockOffset = kOverlapSize;
-            while (nextBlockIndex < kOverlapCount - 1) {
-                mOverlapC[currentBlockIndex][i] = mOverlapC[nextBlockIndex][i] +
-                    mTempCBuffer[blockOffset + i];
+            blockOffset = OverlapSize;
+            while (nextBlockIndex < OverlapCount - 1)
+            {
+                _overlapC[currentBlockIndex][i] =
+                    _overlapC[nextBlockIndex][i] + _tempCBuffer[blockOffset +i];
 
-                currentBlockIndex++;
-                nextBlockIndex++;
-                blockOffset += kOverlapSize;
+                ++currentBlockIndex;
+                ++nextBlockIndex;
+                blockOffset += OverlapSize;
             }
-            mOverlapC[currentBlockIndex][i] = mTempCBuffer[blockOffset + i];
+            _overlapC[currentBlockIndex][i] = _tempCBuffer[blockOffset + i];
         }
     }
 
-    mInputSamplesNeeded = kOverlapSize;
+    _inputSamplesNeeded = OverlapSize;
 
-    return true;
+    return;
 }
