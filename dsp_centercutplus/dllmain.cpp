@@ -1,7 +1,10 @@
-#include "globals.h"
+// library headers
 #include <windows.h>
-#include "winamp_dsp.h"
+
+// local headers
 #include "centercutplus.h"
+#include "globals.h"
+#include "winamp_dsp.h"
 
 // global function implementations
 // dllmain

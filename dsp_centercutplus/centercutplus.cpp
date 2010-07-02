@@ -1,17 +1,33 @@
+// implements class
 #include "centercutplus.h"
-#include "winamp_dsp.h"
+
+// standard headers
+#include <stdint.h>
+
+// library headers
+#include <windows.h>
 #include <QMessageBox>
 
-// static init
-QMutex CenterCutPlus::_mutex;
-CenterCutEngine CenterCutPlus::_engine;
+// local headers
+#include "winamp_dsp.h"
+
+
+// locals
+namespace
+{
+    CenterCutPlus& Instance()
+    {
+        static CenterCutPlus* instance = new CenterCutPlus();
+        return *instance;
+    }
+}
 
 // CenterCutPlus implementation
 BOOL CenterCutPlus::DllMain(ULONG reasonForCall)
 {
     if(reasonForCall == DLL_PROCESS_DETACH)
     {
-        _mutex.lock();
+        Instance()._mutex.lock();
     }
     return TRUE;
 }
@@ -40,10 +56,16 @@ void CenterCutPlus::About(winampDSPModule* thisModule)
                    "http://www.moitah.net\n\n"
                    "Based on VirtualDub's Center Cut filter by Avery Lee.";
 
-    ::MessageBoxA(thisModule->hwndParent, text.toStdString().c_str(), "About", MB_OK);
+    ::MessageBoxA(thisModule->hwndParent, text.toStdString().c_str(),
+                  "About", MB_OK);
 }
 
-int CenterCutPlus::Init(winampDSPModule*)
+int CenterCutPlus::Init(winampDSPModule* thisModule)
+{
+    return Instance().InternalInit(thisModule);
+}
+
+int CenterCutPlus::InternalInit(winampDSPModule* /*thisModule*/)
 {
     QMutexLocker lock(&_mutex);
 
@@ -52,7 +74,12 @@ int CenterCutPlus::Init(winampDSPModule*)
     return _engine.Init();
 }
 
-void CenterCutPlus::Quit(winampDSPModule*)
+void CenterCutPlus::Quit(winampDSPModule* thisModule)
+{
+    return Instance().InternalQuit(thisModule);
+}
+
+void CenterCutPlus::InternalQuit(winampDSPModule* /*thisModule*/)
 {
     QMutexLocker lock(&_mutex);
 
@@ -62,9 +89,21 @@ void CenterCutPlus::Quit(winampDSPModule*)
     _engine.Quit();
 }
 
-int CenterCutPlus::ModifySamples(winampDSPModule*, uint8* samples, int sampleCount,
-                                 int bitsPerSample, int chanCount, int sampleRate)
+int CenterCutPlus::ModifySamples(winampDSPModule* thisModule, uint8_t* samples,
+                                 int sampleCount, int bitsPerSample,
+                                 int chanCount, int sampleRate)
+{
+    return Instance().InternalModifySamples(thisModule, samples, sampleCount,
+                                            bitsPerSample, chanCount,
+                                            sampleRate);
+}
+
+int CenterCutPlus::InternalModifySamples(winampDSPModule* /*thisModule*/,
+                                         uint8_t* samples, int sampleCount,
+                                         int bitsPerSample, int chanCount,
+                                         int sampleRate)
 {
     QMutexLocker lock(&_mutex);
-    return _engine.ModifySamples(samples, sampleCount, bitsPerSample, chanCount, sampleRate);
+    return _engine.ModifySamples(samples, sampleCount, bitsPerSample, chanCount,
+                                 sampleRate);
 }

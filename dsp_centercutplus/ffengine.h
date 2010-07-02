@@ -1,7 +1,8 @@
 #ifndef FFENGINE_H
 #define FFENGINE_H
 
-#include "globals.h"
+// local headers
+#include "classhelpers.h"
 
 class FFEngine
 {

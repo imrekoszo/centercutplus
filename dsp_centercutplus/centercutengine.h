@@ -8,59 +8,24 @@
 #include "classhelpers.h"
 
 // class-wide constants
-namespace Constants
+namespace consts
 {
-    namespace CenterCutEngine
+    namespace cce
     {
-
+        const int WindowSize = 8192;
+        const int OverlapCount = 4;
+        const int OverlapSize = OverlapCount/2;
+        const int MaxOutputBuffers = 32;
     }
 }
 
 class CenterCutEngine
 {
-    // constants
-    enum
-    {
-        WindowSize = 8192,
-        OverlapCount = 4,
-        //PostWindowPower = 2,
-        //HalfWindow = WindowSize/2,
-        OverlapSize = OverlapCount/2,
-        //OutputSampleCount = OverlapSize,
-        MaxOutputBuffers = 32,
-
-        BytesToDouble = 0,
-        DoubleToBytes = 1
-    };
-
-    static const double NoDivByZero;
-    // /constants
-
-    bool    _isInitialized;
-    int     _outputReadSampleOffset;
-    int     _outputBufferCount;  // How many buffers are actually in use (there may be more allocated than in use)
-    double* _outputBuffers[MaxOutputBuffers]; // NOTE: qvector or any advanced solution here?
-    int     _sampleRate;
-    int     _outputDiscardBlocks;
-    uint32  _inputSamplesNeeded;
-    uint32  _inputPos;
-    uint32  _bitRev[WindowSize];
-    double  _preWindow[WindowSize];
-    double  _postWindow[WindowSize];
-    double  _sineTab[WindowSize];
-    double  _input[WindowSize][2];
-    double  _overlapC[OverlapCount-1][OverlapSize];
-    double  _tempLBuffer[WindowSize];
-    double  _tempRBuffer[WindowSize];
-    double  _tempCBuffer[WindowSize];
-
-    CenterCutEngine(const CenterCutEngine&) { }
-
 public:
     CenterCutEngine() : _isInitialized(false) { }
     int Init();
     void Quit();
-    int ModifySamples(uint8* samples, int sampleCount,
+    int ModifySamples(uint8_t* samples, int sampleCount,
                       int bitsPerSample, int chanCount, int sampleRate);
 
 private:
@@ -71,11 +36,31 @@ private:
     bool OutputBufferBeginWrite();
     void Start();
     bool BPSIsValid(int bitsPerSample);
-    int  ProcessSamples(uint8 *inSamples, int inSampleCount,
-                        uint8 *outSamples, int bitsPerSample, int sampleRate);
-    void ConvertSamples(int type, uint8 *sampB, double *sampD,
+    int  ProcessSamples(uint8_t *inSamples, int inSampleCount,
+                        uint8_t *outSamples, int bitsPerSample, int sampleRate);
+    void ConvertSamples(int type, uint8_t *sampB, double *sampD,
                         int sampleCount, int bitsPerSample, int chanCount);
     void Run(); // TODO: rename?
+
+    bool    _isInitialized;
+    int     _outputReadSampleOffset;
+    int     _outputBufferCount;  // How many buffers are actually in use (there may be more allocated than in use)
+    double* _outputBuffers[consts::cce::MaxOutputBuffers]; // NOTE: qvector or any advanced solution here?
+    int     _sampleRate;
+    int     _outputDiscardBlocks;
+    uint32_t  _inputSamplesNeeded;
+    uint32_t  _inputPos;
+    uint32_t  _bitRev[consts::cce::WindowSize];
+    double  _preWindow[consts::cce::WindowSize];
+    double  _postWindow[consts::cce::WindowSize];
+    double  _sineTab[consts::cce::WindowSize];
+    double  _input[consts::cce::WindowSize][2];
+    double  _overlapC[consts::cce::OverlapCount - 1][consts::cce::OverlapSize];
+    double  _tempLBuffer[consts::cce::WindowSize];
+    double  _tempRBuffer[consts::cce::WindowSize];
+    double  _tempCBuffer[consts::cce::WindowSize];
+
+    DISALLOW_COPY_AND_ASSIGN(CenterCutEngine);
 };
 
 #endif // CENTERCUTENGINE_H

@@ -1,7 +1,10 @@
 #ifndef WINAMP_DSP_H
 #define WINAMP_DSP_H
 
-#include "globals.h"
+// standard headers
+#include <stdint.h>
+
+// library headers
 #include <windows.h>
 
 
@@ -20,14 +23,19 @@ struct winampDSPModule
     HWND hwndParent;            // parent window (filled in by calling app)
     HINSTANCE hDllInstance;     // instance handle to this DLL (filled in by calling app)
 
-    void (*Config)(struct winampDSPModule *this_mod);  // configuration dialog (if needed)
-    int (*Init)(struct winampDSPModule *this_mod);     // 0 on success, creates window, etc
+    // configuration dialog (if needed)
+    void (*Config)(struct winampDSPModule *this_mod);
+
+    // 0 on success, creates window, etc
+    int (*Init)(struct winampDSPModule *this_mod);
 
     // modify waveform samples: returns number of samples to actually write
-    // (typically numsamples, but no more than twice numsamples, and no less than half numsamples)
+    // (typically numsamples, but no more than twice numsamples,
+    // and no less than half numsamples)
     // numsamples should always be at least 128. should, but I'm not sure
-    int (*ModifySamples)(struct winampDSPModule *thisModule, uint8 *samples, int sampleCount,
-                         int bitsPerSample, int chanCount, int sampleRate);
+    int (*ModifySamples)(struct winampDSPModule *thisModule, uint8_t *samples,
+                         int sampleCount, int bitsPerSample, int chanCount,
+                         int sampleRate);
 
     void (*Quit)(struct winampDSPModule *this_mod);    // called when unloading
 
