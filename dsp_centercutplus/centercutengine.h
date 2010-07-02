@@ -4,6 +4,9 @@
 // standard headers
 #include <stdint.h>
 
+// library headers
+#include <boost/array.hpp>
+
 // local headers
 #include "classhelpers.h"
 
@@ -12,12 +15,37 @@ namespace consts
 {
     namespace cce
     {
-        const int WindowSize = 8192;
+        const std::size_t WindowSize = 8192;
         const int OverlapCount = 4;
         const int OverlapSize = OverlapCount/2;
         const int MaxOutputBuffers = 32;
     }
 }
+
+/*
+#include <boost/multi_array.hpp>
+#include <QtCore/QCoreApplication>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    typedef boost::multi_array<int, 2> intarray2d;
+
+    intarray2d myarr1(boost::extents[10][2], boost::c_storage_order());
+    intarray2d myarr2(boost::extents[10][2], boost::fortran_storage_order());
+
+    int value = 0;
+    for(intarray2d::index i = 0; i < 10; ++i)
+        for(intarray2d::index j = 0; j < 2; ++j)
+            myarr1[i][j] = myarr2[i][j] = ++value;
+
+
+    return a.exec();
+}
+
+  */
+
 
 class CenterCutEngine
 {
@@ -50,15 +78,15 @@ private:
     int     _outputDiscardBlocks;
     uint32_t  _inputSamplesNeeded;
     uint32_t  _inputPos;
-    uint32_t  _bitRev[consts::cce::WindowSize];
-    double  _preWindow[consts::cce::WindowSize];
-    double  _postWindow[consts::cce::WindowSize];
-    double  _sineTab[consts::cce::WindowSize];
+    boost::array<uint32_t, consts::cce::WindowSize> _bitRev;
+    boost::array<double, consts::cce::WindowSize> _preWindow;
+    boost::array<double, consts::cce::WindowSize> _postWindow;
+    boost::array<double, consts::cce::WindowSize> _sineTab;
     double  _input[consts::cce::WindowSize][2];
     double  _overlapC[consts::cce::OverlapCount - 1][consts::cce::OverlapSize];
-    double  _tempLBuffer[consts::cce::WindowSize];
-    double  _tempRBuffer[consts::cce::WindowSize];
-    double  _tempCBuffer[consts::cce::WindowSize];
+    boost::array<double, consts::cce::WindowSize> _tempLBuffer;
+    boost::array<double, consts::cce::WindowSize> _tempRBuffer;
+    boost::array<double, consts::cce::WindowSize> _tempCBuffer;
 
     DISALLOW_COPY_AND_ASSIGN(CenterCutEngine);
 };
