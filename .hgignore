@@ -57,3 +57,4 @@ hgignore[.-]*
 ignore[.-]*
 svnignore[.-]*
 [Ii]pch/
+dsp_centercutplus-build-desktop/
