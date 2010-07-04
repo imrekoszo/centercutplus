@@ -47,7 +47,6 @@ private:
     typedef boost::shared_array<double> outbuffer_type;
     typedef std::deque<outbuffer_type> outputbuffercollection_type;
 
-    // TODO: move output buffer to separate class?
     void InitOutputBuffers();
     void FreeOutputBuffers();
     void OutputBufferReadComplete();

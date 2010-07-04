@@ -3,15 +3,10 @@
 
 class DSPSettings
 {
-    int _cutModeValue;
-
-    int _frequencyValue;
-    int _centerManipulationMode;
-
-    int _balanceValue;
-    int _balanceMode;
-
 public:
+    enum CenterManipulationMode {CMM_OFF, CMM_HIGHTOSIDES, CMM_LOWTOSIDES};
+    enum BalanceMode {BM_CUTTER, BM_FILLER, BM_MONO};
+
     DSPSettings();
     DSPSettings(const DSPSettings& from);
     DSPSettings(int cutModValuee, int frequencyValue,
@@ -24,15 +19,25 @@ public:
     int& CutModeValue() { return _cutModeValue; }
     int FrequencyValue() const { return _frequencyValue; }
     int& FrequencyValue() const { return _frequencyValue; }
-    int CenterManipulationMode() const { return _centerManipulationMode; }
-    int& CenterManipulationMode() const { return _centerManipulationMode; }
+    CenterManipulationMode CenterManipulationModeValue() const
+    {
+        return _centerManipulationModeValue;
+    }
+    CenterManipulationMode& CenterManipulationModeValue() const
+    {
+        return _centerManipulationModeValue;
+    }
     int BalanceValue() const { return _balanceValue; }
     int& BalanceValue() const { return _balanceValue; }
-    int BalanceMode() const { return _balanceMode; }
-    int& BalanceMode() const { return _balanceMode; }
-public:
-    enum {CMM_OFF, CMM_HIGHTOSIDES, CMM_LOWTOSIDES};
-    enum {BM_CUTTER, BM_FILLER, BM_MONO};
+    BalanceMode BalanceModeValue() const { return _balanceModValuee; }
+    BalanceMode& BalanceModeValue() const { return _balanceModeValue; }
+
+private:
+    int _cutModeValue;
+    int _frequencyValue;
+    CenterManipulationMode _centerManipulationModeValue;
+    int _balanceValue;
+    BalanceMode _balanceModeValue;
 };
 
 #endif // DSPSETTINGS_H

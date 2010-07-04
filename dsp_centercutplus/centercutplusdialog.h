@@ -19,7 +19,7 @@ protected:
 private:
     Ui::CenterCutPlusDialog *ui;
 
-public slots:
+public Q_SLOTS:
     void addClicked();
     void balanceModeChanged(int);
     void balanceValueChanged(int);

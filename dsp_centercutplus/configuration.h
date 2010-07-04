@@ -1,27 +1,35 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
-#include "dspsettings.h"
+// library headers
 #include <QHash>
 #include <QPair>
 
+// local headers
+#include "classhelpers.h"
+#include "dspsettings.h"
+
 class Configuration
 {
-    bool _isBypassed;
+public:
+    bool IsBypassed() const { return _isBypassed; }
+    const QString& CurrentSettingsName() const
+    {
+        static QString emptyName("");
+        return _currentSettingsName != NULL ? *_currentSettingsName : emptyName;
+    }
+    bool CurrentSettingsIsStored() const { return _currentSettingsName !=NULL; }
+    const DSPSettings& CurrentSettings() const { return _currentSettings; }
 
-    QHash<QString, QPair<DSPSettings, QString> > _presets;
+private:
+    typedef QPair<DSPSettings, QString> namedsettings_type;
+
+    bool _isBypassed;
+    QHash<QString, namedsettings_type> _settings;
     DSPSettings _currentSettings;
     QString* _currentSettingsName;
 
-    Configuration(const Configuration&) { }
-
-public:
-    bool IsBypassed() const { return _isBypassed; }
-    QString CurrentSettingsName() const { return _currentSettingsName != NULL
-                                                    ? *_currentSettingsName : ""; }
-    bool CurrentSettingsIsStored() const { return _currentSettingsName != NULL; }
-    DSPSettings CurrentSettings() const { return _currentSettings; }
-
+    DISALLOW_COPY_AND_ASSIGN(Configuration);
 };
 
 #endif // CONFIGURATION_H

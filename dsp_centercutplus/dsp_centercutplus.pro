@@ -22,5 +22,6 @@ HEADERS += winamp_dsp.h \
     configuration.h \
     dspsettings.h \
     classhelpers.h
-RESOURCES += 
+RESOURCES +=
 FORMS += centercutplusdialog.ui
+CONFIG += no_keywords
