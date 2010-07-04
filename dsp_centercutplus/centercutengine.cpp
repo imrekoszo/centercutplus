@@ -25,10 +25,19 @@ namespace
     inline T min(T a, T b) { return a < b ? a : b; }
 }
 
+CenterCutEngine::CenterCutEngine() :
+        _isInitialized(false),
+        _input(boost::extents[consts::cce::WindowSize][2],
+               boost::c_storage_order()),
+        _overlapC(boost::extents[consts::cce::OverlapCount - 1]
+                                [consts::cce::OverlapSize],
+                  boost::c_storage_order())
+{
+}
 
 int CenterCutEngine::Init()
 {
-    InitOutputBuffer();
+    InitOutputBuffers();
     Start();
     _isInitialized = true;
     return 0;
@@ -36,7 +45,7 @@ int CenterCutEngine::Init()
 
 void CenterCutEngine::Quit()
 {
-    FreeOutputBuffer();
+    FreeOutputBuffers();
     _isInitialized = false;
 }
 
@@ -61,96 +70,61 @@ int CenterCutEngine::ModifySamples(uint8_t* samples, int sampleCount,
     return sampleCount;
 }
 
-void CenterCutEngine::InitOutputBuffer()
+void CenterCutEngine::InitOutputBuffers()
 {
-    for (int i = 0; i < consts::cce::MaxOutputBuffers; i++)
-    {
-        _outputBuffers[i] = NULL;
-    }
-    _outputBufferCount = 0;
+    FreeOutputBuffers();
     _outputReadSampleOffset = 0;
 }
 
-void CenterCutEngine::FreeOutputBuffer()
+void CenterCutEngine::FreeOutputBuffers()
 {
-    for (int i = 0; i < consts::cce::MaxOutputBuffers; i++)
-    {
-        if (_outputBuffers[i])
-        {
-            delete[] _outputBuffers[i];
-            _outputBuffers[i] = 0;
-        }
-    }
+    _outputBuffers = outputbuffercollection_type();
 }
 
 void CenterCutEngine::OutputBufferReadComplete()
 {
-    --_outputBufferCount;
+    --_outputBuffersInUse;
     _outputReadSampleOffset = 0;
-    if (_outputBufferCount > 0)
+    if (_outputBuffersInUse > 0)
     {
-        double *moveToEnd = _outputBuffers[0];
-
-        // Shift the buffers so that the current one for reading is at index 0
-        for (int i = 1; i < consts::cce::MaxOutputBuffers; ++i)
-        {
-            _outputBuffers[i - 1] = _outputBuffers[i];
-        }
-        _outputBuffers[consts::cce::MaxOutputBuffers - 1] = NULL;
-
-        // Move the previous first buffer to the end (first null pointer)
-        for (int i = 0; i < consts::cce::MaxOutputBuffers; ++i)
-        {
-            if (!_outputBuffers[i])
-            {
-                _outputBuffers[i] = moveToEnd;
-                break;
-            }
-        }
+        _outputBuffers.push_back(_outputBuffers.front());
+        _outputBuffers.pop_front();
     }
 }
 
 bool  CenterCutEngine::OutputBufferBeginWrite()
 {
-    if (_outputBufferCount == consts::cce::MaxOutputBuffers)
+    if (_outputBuffersInUse == consts::cce::MaxOutputBuffers)
     {
         return false;
     }
 
-    int i = _outputBufferCount;
-    if (!_outputBuffers[i])
-    {
-        // No buffer exists at this index, make a new one
-        _outputBuffers[i] = new double[kOutputSampleCount*2];
-        if (!_outputBuffers[i])
-        {
-            return false;
-        }
-    }
+    _outputBuffers.push_back(outbuffer_type(new double[kOutputSampleCount*2]));
 
-    ++_outputBufferCount;
+    ++_outputBuffersInUse;
     return true;
 }
 
 void CenterCutEngine::Start()
 {
-    FFEngine::VDCreateBitRevTable(_bitRev, consts::cce::WindowSize);
-    FFEngine::VDCreateHalfSineTable(_sineTab, consts::cce::WindowSize);
+    FFEngine::VDCreateBitRevTable(_bitRev.begin(), consts::cce::WindowSize);
+    FFEngine::VDCreateHalfSineTable(_sineTab.begin(), consts::cce::WindowSize);
 
     _inputSamplesNeeded = consts::cce::OverlapSize;
     _inputPos = 0;
 
     _outputDiscardBlocks = consts::cce::OverlapCount - 1;
 
-    memset(_input, 0, sizeof _input);
-    memset(_overlapC, 0, sizeof _overlapC);
+    memset(_input.origin(), 0,
+           _input.num_elements() * sizeof(double2Array_type::element));
+    memset(_overlapC.origin(), 0,
+           _overlapC.num_elements() * sizeof(double2Array_type::element));
 
-    QVector<double> tmpBuffer(consts::cce::WindowSize);
-    double *tmp = &(tmpBuffer[0]);
-    if (!tmp)
-        return;
-    FFEngine::VDCreateRaisedCosineWindow(tmp, consts::cce::WindowSize, 1.0);
-    for(int i = 0; i < consts::cce::WindowSize; ++i)
+    doubleArray_type<consts::cce::WindowSize> tmpBuffer;
+    FFEngine::VDCreateRaisedCosineWindow(tmpBuffer.begin(), tmpBuffer.size(),
+                                         1.0);
+    size_t len = _preWindow.size();
+    for(size_t i = 0; i < len; ++i)
     {
         // The correct Hartley<->FFT conversion is:
         //
@@ -160,11 +134,11 @@ void CenterCutEngine::Start()
         // We omit the 0.5 in both the forward and reverse directions,
         // so we have a 0.25 to put here.
 
-        _preWindow[i] = tmp[_bitRev[i]] * 0.5 *
+        _preWindow[i] = tmpBuffer[_bitRev[i]] * 0.5 *
                         (2.0 / static_cast<double>(consts::cce::OverlapCount));
     }
 
-    FFEngine::CreatePostWindow(_postWindow, consts::cce::WindowSize,
+    FFEngine::CreatePostWindow(_postWindow.begin(), consts::cce::WindowSize,
                                kPostWindowPower);
 }
 
@@ -205,10 +179,9 @@ int  CenterCutEngine::ProcessSamples(uint8_t *inSamples, int inSampleCount,
         }
     }
 
-    while ((_outputBufferCount > 0) && (outSampleCount < maxOutSampleCount))
+    while ((_outputBuffersInUse > 0) && (outSampleCount < maxOutSampleCount))
     {
-        double *sampD = _outputBuffers[0];
-        if (!sampD) return -1;
+        double *sampD = _outputBuffers.front().get();
 
         copyCount = min(kOutputSampleCount - _outputReadSampleOffset,
                         maxOutSampleCount - outSampleCount);
@@ -303,7 +276,7 @@ void CenterCutEngine::ConvertSamples(int type, uint8_t *sampB, double *sampD,
 void CenterCutEngine::Run()
 {
     // copy to temporary buffer and FHT
-    for(int i = 0; i < consts::cce::WindowSize; ++i)
+    for(size_t i = 0; i < consts::cce::WindowSize; ++i)
     {
         const unsigned j = _bitRev[i];
         const unsigned k = (j + _inputPos) & (consts::cce::WindowSize - 1);
@@ -313,8 +286,10 @@ void CenterCutEngine::Run()
         _tempRBuffer[i] = _input[k][1] * w;
     }
 
-    FFEngine::VDComputeFHT(_tempLBuffer, consts::cce::WindowSize, _sineTab);
-    FFEngine::VDComputeFHT(_tempRBuffer, consts::cce::WindowSize, _sineTab);
+    FFEngine::VDComputeFHT(_tempLBuffer.begin(), consts::cce::WindowSize,
+                           _sineTab.begin());
+    FFEngine::VDComputeFHT(_tempRBuffer.begin(), consts::cce::WindowSize,
+                           _sineTab.begin());
 
     // read configuration from UI
     Preset preset = Config::GetPreset();
@@ -367,32 +342,31 @@ void CenterCutEngine::Run()
     }
 
     // reconstitute left/right/center channels
-
-    FFEngine::VDComputeFHT(_tempCBuffer, consts::cce::WindowSize, _sineTab);
+    FFEngine::VDComputeFHT(_tempCBuffer.begin(), consts::cce::WindowSize,
+                           _sineTab.begin());
 
     // apply post-window
-
-    for (int i = 0; i < consts::cce::WindowSize; ++i)
+    for (size_t i = 0; i < consts::cce::WindowSize; ++i)
     {
         _tempCBuffer[i] *= _postWindow[i];
     }
 
     // writeout
-
-
     if (_outputDiscardBlocks > 0)
     {
         _outputDiscardBlocks--;
     }
     else
     {
-        int currentBlockIndex, nextBlockIndex, blockOffset;
+        size_t currentBlockIndex, nextBlockIndex, blockOffset;
 
-        if (!OutputBufferBeginWrite()) return; // TODO: exception?
-        double *outBuffer = _outputBuffers[_outputBufferCount - 1];
-        if (!outBuffer) return; // TODO: exception?
+        if (!OutputBufferBeginWrite())
+        {
+            return; // TODO: exception?
+        }
+        double *outBuffer = _outputBuffers[_outputBuffersInUse - 1].get();
 
-        for(int i = 0; i < consts::cce::OverlapSize; ++i)
+        for(size_t i = 0; i < consts::cce::OverlapSize; ++i)
         {
             double c = _overlapC[0][i] + _tempCBuffer[i];
             double l = _input[_inputPos + i][0] - c;

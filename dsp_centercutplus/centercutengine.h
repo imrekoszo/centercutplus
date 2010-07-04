@@ -2,10 +2,13 @@
 #define CENTERCUTENGINE_H
 
 // standard headers
+#include <deque>
 #include <stdint.h>
 
 // library headers
 #include <boost/array.hpp>
+#include <boost/multi_array.hpp>
+#include <boost/shared_array.hpp>
 
 // local headers
 #include "classhelpers.h"
@@ -15,51 +18,38 @@ namespace consts
 {
     namespace cce
     {
-        const std::size_t WindowSize = 8192;
-        const int OverlapCount = 4;
-        const int OverlapSize = OverlapCount/2;
+        const size_t WindowSize = 8192;
+        const size_t OverlapCount = 4;
+        const size_t OverlapSize = OverlapCount/2;
         const int MaxOutputBuffers = 32;
     }
 }
-
-/*
-#include <boost/multi_array.hpp>
-#include <QtCore/QCoreApplication>
-
-int main(int argc, char *argv[])
-{
-    QCoreApplication a(argc, argv);
-
-    typedef boost::multi_array<int, 2> intarray2d;
-
-    intarray2d myarr1(boost::extents[10][2], boost::c_storage_order());
-    intarray2d myarr2(boost::extents[10][2], boost::fortran_storage_order());
-
-    int value = 0;
-    for(intarray2d::index i = 0; i < 10; ++i)
-        for(intarray2d::index j = 0; j < 2; ++j)
-            myarr1[i][j] = myarr2[i][j] = ++value;
-
-
-    return a.exec();
-}
-
-  */
 
 
 class CenterCutEngine
 {
 public:
-    CenterCutEngine() : _isInitialized(false) { }
+    CenterCutEngine();
     int Init();
     void Quit();
     int ModifySamples(uint8_t* samples, int sampleCount,
                       int bitsPerSample, int chanCount, int sampleRate);
 
 private:
+    template<size_t Tsize>
+    class uint32Array_type : public boost::array<uint32_t, Tsize> {};
+
+    template<size_t Tsize>
+    class doubleArray_type : public boost::array<double, Tsize> {};
+
+    typedef boost::multi_array<double, 2> double2Array_type;
+
+    typedef boost::shared_array<double> outbuffer_type;
+    typedef std::deque<outbuffer_type> outputbuffercollection_type;
+
     // TODO: move output buffer to separate class?
-    void InitOutputBuffer();
-    void FreeOutputBuffer();
+    void InitOutputBuffers();
+    void FreeOutputBuffers();
     void OutputBufferReadComplete();
     bool OutputBufferBeginWrite();
     void Start();
@@ -70,23 +60,27 @@ private:
                         int sampleCount, int bitsPerSample, int chanCount);
     void Run(); // TODO: rename?
 
+    // private fields
     bool    _isInitialized;
+
     int     _outputReadSampleOffset;
-    int     _outputBufferCount;  // How many buffers are actually in use (there may be more allocated than in use)
-    double* _outputBuffers[consts::cce::MaxOutputBuffers]; // NOTE: qvector or any advanced solution here?
+    int     _outputBuffersInUse;  // (there may be more allocated than in use)
+    outputbuffercollection_type _outputBuffers;
+
     int     _sampleRate;
     int     _outputDiscardBlocks;
-    uint32_t  _inputSamplesNeeded;
-    uint32_t  _inputPos;
-    boost::array<uint32_t, consts::cce::WindowSize> _bitRev;
-    boost::array<double, consts::cce::WindowSize> _preWindow;
-    boost::array<double, consts::cce::WindowSize> _postWindow;
-    boost::array<double, consts::cce::WindowSize> _sineTab;
-    double  _input[consts::cce::WindowSize][2];
-    double  _overlapC[consts::cce::OverlapCount - 1][consts::cce::OverlapSize];
-    boost::array<double, consts::cce::WindowSize> _tempLBuffer;
-    boost::array<double, consts::cce::WindowSize> _tempRBuffer;
-    boost::array<double, consts::cce::WindowSize> _tempCBuffer;
+    unsigned  _inputSamplesNeeded;
+    unsigned  _inputPos;
+
+    uint32Array_type<consts::cce::WindowSize> _bitRev;
+    doubleArray_type<consts::cce::WindowSize> _preWindow;
+    doubleArray_type<consts::cce::WindowSize> _postWindow;
+    doubleArray_type<consts::cce::WindowSize> _sineTab;
+    double2Array_type _input;
+    double2Array_type _overlapC;
+    doubleArray_type<consts::cce::WindowSize> _tempLBuffer;
+    doubleArray_type<consts::cce::WindowSize> _tempRBuffer;
+    doubleArray_type<consts::cce::WindowSize> _tempCBuffer;
 
     DISALLOW_COPY_AND_ASSIGN(CenterCutEngine);
 };

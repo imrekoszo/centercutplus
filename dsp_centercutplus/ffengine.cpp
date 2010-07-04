@@ -39,8 +39,8 @@ unsigned FFEngine::RevBits(unsigned x, unsigned bits)
 
 void FFEngine::VDCreateRaisedCosineWindow(double *dst, int n, double power)
 {
-    const double twopi_over_n = kTwoPi / n;
-    const double scalefac = 1.0 / n;
+    const double twopi_over_n = kTwoPi/n;
+    const double scalefac = 1.0/n;
 
     for(int i = 0; i < n; ++i)
     {
