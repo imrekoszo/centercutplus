@@ -3,31 +3,37 @@
 
 // library headers
 #include <QHash>
+#include <QList>
 #include <QPair>
 
 // local headers
 #include "classhelpers.h"
-#include "dspsettings.h"
+#include "controlstate.h"
 
 class Configuration
 {
 public:
     bool IsBypassed() const { return _isBypassed; }
-    const QString& CurrentSettingsName() const
+
+    bool CurrentStateIsPreset() const { return _currentStateName !=NULL; }
+    const QString& CurrentStateName() const
     {
         static QString emptyName("");
-        return _currentSettingsName != NULL ? *_currentSettingsName : emptyName;
+        return CurrentStateIsPreset() ? *_currentStateName : emptyName;
     }
-    bool CurrentSettingsIsStored() const { return _currentSettingsName !=NULL; }
-    const DSPSettings& CurrentSettings() const { return _currentSettings; }
+    const ControlState& CurrentState() const { return _currentState; }
+
+    QList<QString> PresetNames() const { return _presets.uniqueKeys(); }
+
+    //
 
 private:
-    typedef QPair<DSPSettings, QString> namedsettings_type;
+    typedef QHash<QString, ControlState> preset_collection;
 
     bool _isBypassed;
-    QHash<QString, namedsettings_type> _settings;
-    DSPSettings _currentSettings;
-    QString* _currentSettingsName;
+    preset_collection _presets;
+    ControlState _currentState;
+    QString* _currentStateName;
 
     DISALLOW_COPY_AND_ASSIGN(Configuration);
 };

@@ -1,19 +1,19 @@
-#ifndef DSPSETTINGS_H
-#define DSPSETTINGS_H
+#ifndef CONTROLSTATE_H
+#define CONTROLSTATE_H
 
-class DSPSettings
+class ControlState
 {
 public:
     enum CenterManipulationMode {CMM_OFF, CMM_HIGHTOSIDES, CMM_LOWTOSIDES};
     enum BalanceMode {BM_CUTTER, BM_FILLER, BM_MONO};
 
-    DSPSettings();
-    DSPSettings(const DSPSettings& from);
-    DSPSettings(int cutModValuee, int frequencyValue,
-                int centerManipulationMode,
-                int balanceValue, int balanceMode);
-    bool operator==(const DSPSettings& to) const;
-    void operator=(const DSPSettings& from);
+    ControlState();
+    ControlState(const ControlState& from);
+    ControlState(int cutModeValue, int frequencyValue,
+                 int centerManipulationMode,
+                 int balanceValue, int balanceMode);
+    bool operator==(const ControlState& to) const;
+    ControlState& operator=(const ControlState& from);
 
     int CutModeValue() const { return _cutModeValue; }
     int& CutModeValue() { return _cutModeValue; }
@@ -40,4 +40,4 @@ private:
     BalanceMode _balanceModeValue;
 };
 
-#endif // DSPSETTINGS_H
+#endif // CONTROLSTATE_H

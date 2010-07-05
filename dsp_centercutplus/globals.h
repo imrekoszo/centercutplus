@@ -9,14 +9,4 @@
 #   define DSP_CENTERCUTPLUSSHARED_EXPORT Q_DECL_IMPORT
 #endif
 
-/*
-#ifndef maximum
-#   define maximum(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef minimum
-#   define minimum(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-*/
-
 #endif // DSP_CENTERCUTPLUS_GLOBAL_H

@@ -11,7 +11,7 @@ SOURCES += centercutplus.cpp \
     ffengine.cpp \
     centercutplusdialog.cpp \
     configuration.cpp \
-    dspsettings.cpp
+    controlstate.cpp
 HEADERS += winamp_dsp.h \
     centercutplus.h \
     globals.h \
@@ -20,8 +20,8 @@ HEADERS += winamp_dsp.h \
     ffengine.h \
     centercutplusdialog.h \
     configuration.h \
-    dspsettings.h \
-    classhelpers.h
-RESOURCES +=
+    classhelpers.h \
+    controlstate.h
+RESOURCES += 
 FORMS += centercutplusdialog.ui
 CONFIG += no_keywords
