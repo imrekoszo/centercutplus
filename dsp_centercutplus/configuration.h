@@ -25,13 +25,14 @@ public:
 
     QList<QString> PresetNames() const { return _presets.uniqueKeys(); }
 
-    //
+    bool SaveCurrentStateAsPreset(const QString& name,
+                                  bool overwriteExisting = false);
 
 private:
-    typedef QHash<QString, ControlState> preset_collection;
+    typedef QHash<QString, ControlState> PresetCollection;
 
     bool _isBypassed;
-    preset_collection _presets;
+    PresetCollection _presets;
     ControlState _currentState;
     QString* _currentStateName;
 
