@@ -13,20 +13,26 @@
 class Configuration
 {
 public:
-    bool IsBypassed() const { return _isBypassed; }
+    bool IsBypassed() const;
+    bool CurrentStateIsPreset() const;
+    const QString& CurrentStateName() const;
+    const ControlState& CurrentState() const;
+    QList<QString> PresetNames() const;
 
-    bool CurrentStateIsPreset() const { return _currentStateName !=NULL; }
-    const QString& CurrentStateName() const
-    {
-        static QString emptyName("");
-        return CurrentStateIsPreset() ? *_currentStateName : emptyName;
-    }
-    const ControlState& CurrentState() const { return _currentState; }
+    bool SaveCurrentControlStateAsPreset(const QString& name,
+                                         bool overwriteExisting = false);
+    void LoadPreset(const QString& name);
+    void SetCutMode(int value, const IController* sender);
+    void SetFrequency(int value, const IController* sender);
+    void SetCenterManipulationMode(ControlState::CenterManipulationMode value,
+                                   const IController* sender);
+    void SetBalance(int value, const IController* sender);
+    void SetBalanceMode(ControlState::BalanceMode value,
+                        const IController* sender);
 
-    QList<QString> PresetNames() const { return _presets.uniqueKeys(); }
+Q_SIGNALS:
+    void CutModeValueChanged(int value, const IController* sender);
 
-    bool SaveCurrentStateAsPreset(const QString& name,
-                                  bool overwriteExisting = false);
 
 private:
     typedef QHash<QString, ControlState> PresetCollection;
