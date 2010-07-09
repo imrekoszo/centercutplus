@@ -19,20 +19,35 @@ public:
     const ControlState& CurrentState() const;
     QList<QString> PresetNames() const;
 
+    void SetBypassed(bool value, const void* controller = NULL);
     bool SaveCurrentControlStateAsPreset(const QString& name,
-                                         bool overwriteExisting = false);
-    void LoadPreset(const QString& name);
-    void SetCutMode(int value, const IController* sender);
-    void SetFrequency(int value, const IController* sender);
+                                         bool overwriteExisting = false,
+                                         const void* controller = NULL);
+    bool DeleteCurrentPreset(const void* controller = NULL);
+    void SelectPreset(const QString& name, const void* controller = NULL);
+
+    void SetCutMode(int value, const void* controller = NULL);
+    void SetFrequency(int value, const void* controller = NULL);
     void SetCenterManipulationMode(ControlState::CenterManipulationMode value,
-                                   const IController* sender);
-    void SetBalance(int value, const IController* sender);
+                                   const void* controller = NULL);
+    void SetBalance(int value, const void* controller = NULL);
     void SetBalanceMode(ControlState::BalanceMode value,
-                        const IController* sender);
+                        const void* controller = NULL);
 
 Q_SIGNALS:
-    void CutModeValueChanged(int value, const IController* sender);
-
+    void IsBypassedChanged(bool value, const void* controller = NULL);
+    void NewPresetAdded(const QString& name, const void* controller = NULL);
+    void PresetDeleted(const QString& name, const void* controller = NULL);
+    void PresetSelectionChanged(const QString& name,
+                                const void* controller = NULL);
+    void CutModeValueChanged(int value, const void* controller);
+    void FrequencyValueChanged(int value, const void* controller = NULL);
+    void CenterManipulationModeValueChanged(
+            ControlState::CenterManipulationMode value,
+            const void* controller = NULL);
+    void BalanceValueChanged(int value, const void* controller = NULL);
+    void BalanceModeValueChanged(ControlState::BalanceMode value,
+                                 const void* controller = NULL);
 
 private:
     typedef QHash<QString, ControlState> PresetCollection;
@@ -43,6 +58,7 @@ private:
     QString* _currentStateName;
 
     DISALLOW_COPY_AND_ASSIGN(Configuration);
+    Q_OBJECT
 };
 
 #endif // CONFIGURATION_H
