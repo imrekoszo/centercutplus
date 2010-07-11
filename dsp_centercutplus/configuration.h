@@ -15,16 +15,16 @@ class Configuration
 public:
     bool IsBypassed() const;
     bool CurrentStateIsPreset() const;
-    const QString& CurrentStateName() const;
+    const QString& LastPresetName() const;
     const ControlState& CurrentState() const;
     QList<QString> PresetNames() const;
 
     void SetBypassed(bool value, const void* controller = NULL);
+    void SelectPreset(const QString& name, const void* controller = NULL);
     bool SaveCurrentControlStateAsPreset(const QString& name,
                                          bool overwriteExisting = false,
                                          const void* controller = NULL);
     bool DeleteCurrentPreset(const void* controller = NULL);
-    void SelectPreset(const QString& name, const void* controller = NULL);
 
     void SetCutMode(int value, const void* controller = NULL);
     void SetFrequency(int value, const void* controller = NULL);
@@ -35,30 +35,25 @@ public:
                         const void* controller = NULL);
 
 Q_SIGNALS:
-    void IsBypassedChanged(bool value, const void* controller = NULL);
-    void NewPresetAdded(const QString& name, const void* controller = NULL);
-    void PresetDeleted(const QString& name, const void* controller = NULL);
-    void PresetSelectionChanged(const QString& name,
-                                const void* controller = NULL);
-    void CutModeValueChanged(int value, const void* controller);
-    void FrequencyValueChanged(int value, const void* controller = NULL);
-    void CenterManipulationModeValueChanged(
-            ControlState::CenterManipulationMode value,
-            const void* controller = NULL);
-    void BalanceValueChanged(int value, const void* controller = NULL);
-    void BalanceModeValueChanged(ControlState::BalanceMode value,
-                                 const void* controller = NULL);
+    void IsBypassedChanged(const void* controller);
+    void PresetAdded(QString name, const void* controller);
+    void PresetDeleted(QString name, const void* controller);
+    void PresetSelectionChanged(const void* controller);
+    void CurrentStatePropertyChanged(const void* controller);
 
 private:
     typedef QHash<QString, ControlState> PresetCollection;
 
+    void UpdateCurrentStateIsPreset(const void* originatingController);
+
     bool _isBypassed;
     PresetCollection _presets;
     ControlState _currentState;
-    QString* _currentStateName;
+    QString _lastPresetName;
+    bool _currentStateIsPreset;
 
-    DISALLOW_COPY_AND_ASSIGN(Configuration);
     Q_OBJECT
+    DISALLOW_COPY_AND_ASSIGN(Configuration);
 };
 
 #endif // CONFIGURATION_H
