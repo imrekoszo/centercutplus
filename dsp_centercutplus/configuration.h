@@ -13,39 +13,60 @@
 class Configuration
 {
 public:
+    Configuration();
+
+    void Init(const QString& iniFilePath);
+
     bool IsBypassed() const;
     bool CurrentStateIsPreset() const;
     const QString& LastPresetName() const;
     const ControlState& CurrentState() const;
     QList<QString> PresetNames() const;
 
-    void SetBypassed(bool value, const void* controller = NULL);
-    void SelectPreset(const QString& name, const void* controller = NULL);
-    bool SaveCurrentControlStateAsPreset(const QString& name,
-                                         bool overwriteExisting = false,
-                                         const void* controller = NULL);
-    bool DeleteCurrentPreset(const void* controller = NULL);
+    void SetBypassed(
+            bool value,
+            const void* originatingController = NULL);
+    void SelectPreset(
+            const QString& name,
+            const void* originatingController = NULL);
+    bool SaveCurrentControlStateAsPreset(
+            const QString& name,
+            bool overwriteExisting = false,
+            const void* originatingController = NULL);
+    bool DeleteCurrentPreset(
+            const void* originatingController = NULL);
 
-    void SetCutMode(int value, const void* controller = NULL);
-    void SetFrequency(int value, const void* controller = NULL);
-    void SetCenterManipulationMode(ControlState::CenterManipulationMode value,
-                                   const void* controller = NULL);
-    void SetBalance(int value, const void* controller = NULL);
-    void SetBalanceMode(ControlState::BalanceMode value,
-                        const void* controller = NULL);
+    void SetCutMode(
+            int value,
+            const void* originatingController = NULL);
+    void SetFrequency(
+            int value,
+            const void* originatingController = NULL);
+    void SetCenterManipulationMode(
+            ControlState::CenterManipulationMode value,
+            const void* originatingController = NULL);
+    void SetBalance(
+            int value,
+            const void* originatingController = NULL);
+    void SetBalanceMode(
+            ControlState::BalanceMode value,
+            const void* originatingController = NULL);
 
 Q_SIGNALS:
-    void IsBypassedChanged(const void* controller);
-    void PresetAdded(QString name, const void* controller);
-    void PresetDeleted(QString name, const void* controller);
-    void PresetSelectionChanged(const void* controller);
-    void CurrentStatePropertyChanged(const void* controller);
+    void IsBypassedChanged(const void* originatingController);
+    void PresetAdded(QString name, const void* originatingController);
+    void PresetDeleted(QString name, const void* originatingController);
+    void PresetSelectionChanged(const void* originatingController);
+    void CurrentStatePropertyChanged(const void* originatingController);
 
 private:
     typedef QHash<QString, ControlState> PresetCollection;
 
+    void LoadFromIniFile();
+    void SaveToIniFile();
     void UpdateCurrentStateIsPreset(const void* originatingController);
 
+    QString _iniFilePath;
     bool _isBypassed;
     PresetCollection _presets;
     ControlState _currentState;

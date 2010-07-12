@@ -1,6 +1,23 @@
 #include "configuration.h"
 
 #include <QList>
+#include <QSettings>
+
+Configuration::Configuration()
+    : _iniFilePath(""),
+      _isBypassed(true),
+      _presets(),
+      _currentState(),
+      _lastPresetName(""),
+      _currentStateIsPreset(false)
+{
+}
+
+inline void Configuration::Init(const QString& iniFilePath)
+{
+    _iniFilePath = iniFilePath;
+    LoadFromIniFile();
+}
 
 inline bool Configuration::IsBypassed() const
 {
@@ -29,17 +46,19 @@ inline QList<QString> Configuration::PresetNames() const
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline void Configuration::SetBypassed(bool value,
-                                       const void* controller //= NULL
-                                       )
+inline void Configuration::SetBypassed(
+        bool value,
+        const void* originatingController //= NULL
+        )
 {
     _isBypassed = value;
-    Q_EMIT IsBypassedChanged(controller);
+    Q_EMIT IsBypassedChanged(originatingController);
 }
 
-inline void Configuration::SelectPreset(const QString& name,
-                                        const void* controller //= NULL
-                                        )
+inline void Configuration::SelectPreset(
+        const QString& name,
+        const void* originatingController //= NULL
+        )
 {
     if(name == _currentStateName || !_presets.contains(name))
     {
@@ -50,13 +69,13 @@ inline void Configuration::SelectPreset(const QString& name,
     _currentState = _presets[_lastPresetName];
     _currentStateIsPreset = true;
 
-    Q_EMIT PresetSelectionChanged(controller);
+    Q_EMIT PresetSelectionChanged(originatingController);
 }
 
 bool Configuration::SaveCurrentControlStateAsPreset(
         const QString& name,
         bool overwriteExisting, //= false
-        const void* controller //= NULL
+        const void* originatingController //= NULL
         )
 {
     if(!overwriteExisting && _presets.contains(name))
@@ -68,13 +87,14 @@ bool Configuration::SaveCurrentControlStateAsPreset(
     _presets[_lastPresetName] = _currentState;
     _currentStateIsPreset = true;
 
-    Q_EMIT PresetAdded(_lastPresetName, controller);
+    Q_EMIT PresetAdded(_lastPresetName, originatingController);
 
     return true;
 }
 
-bool Configuration::DeleteCurrentPreset(const void* controller //= NULL
-                                        )
+bool Configuration::DeleteCurrentPreset(
+        const void* originatingController //= NULL
+        )
 {
     if(!CurrentStateIsPreset())
     {
@@ -87,53 +107,75 @@ bool Configuration::DeleteCurrentPreset(const void* controller //= NULL
 
     Q_ASSERT(removedCount == 1);
 
-    Q_EMIT PresetDeleted(presetName, controller);
+    Q_EMIT PresetDeleted(presetName, originatingController);
 
     return true;
 }
 
-void Configuration::SetCutMode(int value, const void* controller //= NULL
-                               )
+void Configuration::SetCutMode(
+        int value,
+        const void* originatingController //= NULL
+        )
 {
     _currentState.CutModeValue() = value;
-    Q_EMIT CurrentStatePropertyChanged(controller);
-    UpdateCurrentStateIsPreset(controller);
+    Q_EMIT CurrentStatePropertyChanged(originatingController);
+    UpdateCurrentStateIsPreset(originatingController);
 }
 
-void Configuration::SetFrequency(int value, const void* controller //= NULL
-                                 )
+void Configuration::SetFrequency(
+        int value,
+        const void* originatingController //= NULL
+        )
 {
     _currentState.FrequencyValue() = value;
-    Q_EMIT CurrentStatePropertyChanged(controller);
-    UpdateCurrentStateIsPreset(controller);
+    Q_EMIT CurrentStatePropertyChanged(originatingController);
+    UpdateCurrentStateIsPreset(originatingController);
 }
+
 void Configuration::SetCenterManipulationMode(
         ControlState::CenterManipulationMode value,
-        const void* controller //= NULL
+        const void* originatingController //= NULL
         )
 {
     _currentState.CenterManipulationModeValue() = value;
-    Q_EMIT CurrentStatePropertyChanged(controller);
-    UpdateCurrentStateIsPreset(controller);
+    Q_EMIT CurrentStatePropertyChanged(originatingController);
+    UpdateCurrentStateIsPreset(originatingController);
 }
-void Configuration::SetBalance(int value, const void* controller //= NULL
-                               )
+
+void Configuration::SetBalance(
+        int value,
+        const void* originatingController //= NULL
+        )
 {
     _currentState.BalanceValue() = value;
-    Q_EMIT CurrentStatePropertyChanged(controller);
-    UpdateCurrentStateIsPreset(controller);
+    Q_EMIT CurrentStatePropertyChanged(originatingController);
+    UpdateCurrentStateIsPreset(originatingController);
 }
-void Configuration::SetBalanceMode(ControlState::BalanceMode value,
-                                   const void* controller //= NULL
-                                   )
+
+void Configuration::SetBalanceMode(
+        ControlState::BalanceMode value,
+        const void* originatingController //= NULL
+        )
 {
     _currentState.BalanceModeValue() = value;
-    Q_EMIT CurrentStatePropertyChanged(controller);
-    UpdateCurrentStateIsPreset(controller);
+    Q_EMIT CurrentStatePropertyChanged(originatingController);
+    UpdateCurrentStateIsPreset(originatingController);
+}
+
+void Configuration::LoadFromIniFile()
+{
+    QSettings iniSettings(_iniFilePath, QSettings::IniFormat);
+    iniSettings.
+}
+
+void Configuration::SaveToIniFile()
+{
+    QSettings iniSettings(_iniFilePath, QSettings::IniFormat);
 }
 
 void Configuration::UpdateCurrentStateIsPreset(
-        const void* originatingController)
+        const void* originatingController
+        )
 {
     bool signalIsNeeded = false;
 
