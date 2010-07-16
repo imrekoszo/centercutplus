@@ -1,6 +1,8 @@
 #ifndef CONTROLSTATE_H
 #define CONTROLSTATE_H
 
+#include <QSettings>
+
 class ControlState
 {
 public:
@@ -15,22 +17,20 @@ public:
     bool operator==(const ControlState& to) const;
     ControlState& operator=(const ControlState& from);
 
-    int CutModeValue() const { return _cutModeValue; }
-    int& CutModeValue() { return _cutModeValue; }
-    int FrequencyValue() const { return _frequencyValue; }
-    int& FrequencyValue() const { return _frequencyValue; }
-    CenterManipulationMode CenterManipulationModeValue() const
-    {
-        return _centerManipulationModeValue;
-    }
-    CenterManipulationMode& CenterManipulationModeValue() const
-    {
-        return _centerManipulationModeValue;
-    }
-    int BalanceValue() const { return _balanceValue; }
-    int& BalanceValue() const { return _balanceValue; }
-    BalanceMode BalanceModeValue() const { return _balanceModValuee; }
-    BalanceMode& BalanceModeValue() const { return _balanceModeValue; }
+    int CutModeValue() const;
+    int FrequencyValue() const;
+    CenterManipulationMode CenterManipulationModeValue() const;
+    int BalanceValue() const;
+    BalanceMode BalanceModeValue() const;
+
+    void CutModeValue(int value);
+    void FrequencyValue(int value);
+    void CenterManipulationModeValue(CenterManipulationMode value);
+    void BalanceValue(int value);
+    void BalanceModeValue(BalanceMode value);
+
+    void SaveToIniFile(QSettings& ini);
+    bool LoadFromIniFile(const QSettings& ini);
 
 private:
     int _cutModeValue;

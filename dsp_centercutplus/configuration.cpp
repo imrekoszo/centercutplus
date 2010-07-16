@@ -3,6 +3,15 @@
 #include <QList>
 #include <QSettings>
 
+
+namespace
+{
+    const char* kBypassedName = "isBypassed";
+    const char* kPresetsGroupName = "Presets";
+    const char* kPresetPrefix = "preset";
+    const char* kPresetNameName = "name";
+}
+
 Configuration::Configuration()
     : _iniFilePath(""),
       _isBypassed(true),
@@ -165,12 +174,27 @@ void Configuration::SetBalanceMode(
 void Configuration::LoadFromIniFile()
 {
     QSettings iniSettings(_iniFilePath, QSettings::IniFormat);
-    iniSettings.
 }
 
 void Configuration::SaveToIniFile()
 {
     QSettings iniSettings(_iniFilePath, QSettings::IniFormat);
+    iniSettings.setValue(kBypassedName, _isBypassed);
+}
+
+void Configuration::SaveStateToIniFile(const ControlState& state,
+                                       QSettings& ini)
+{
+    ini.setValue(kBalanceModeName, (int)state.BalanceModeValue());
+    ini.setValue(kBalanceName, state.BalanceValue());
+    ini.setValue();
+    ini.setValue();
+    iniSettings.setValue();
+}ini
+
+ControlState Configuration::LoadStateFromIniFile(const QSettings& ini)
+{
+
 }
 
 void Configuration::UpdateCurrentStateIsPreset(
