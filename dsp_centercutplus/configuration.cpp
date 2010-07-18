@@ -174,27 +174,60 @@ void Configuration::SetBalanceMode(
 void Configuration::LoadFromIniFile()
 {
     QSettings iniSettings(_iniFilePath, QSettings::IniFormat);
+    _presets.clear();
+
+    // bypassed
+    _isBypassed = iniSettings.value(kBypassedName).toBool();
+
+    // current state
+    ControlState controlState;
+    if(controlState.LoadFromIniFile(iniSettings))
+    {
+        _currentState = controlState;
+    }
+
+    // presets
+    iniSettings.beginGroup(kPresetsGroupName);
+    int size = iniSettings.beginReadArray(kPresetPrefix);
+    for(int i = 0; i < size; ++i)
+    {
+        iniSettings.setArrayIndex(i);
+
+        if(controlState.LoadFromIniFile(iniSettings))
+        {
+            QString name = iniSettings.value(kPresetNameName).toString();
+            _presets[name] = controlState;
+        }
+    }
+    iniSettings.endArray();
+    iniSettings.endGroup();
+
+    // signal
+    UpdateCurrentStateIsPreset(NULL);
 }
 
 void Configuration::SaveToIniFile()
 {
     QSettings iniSettings(_iniFilePath, QSettings::IniFormat);
+
+    // bypassed
     iniSettings.setValue(kBypassedName, _isBypassed);
-}
 
-void Configuration::SaveStateToIniFile(const ControlState& state,
-                                       QSettings& ini)
-{
-    ini.setValue(kBalanceModeName, (int)state.BalanceModeValue());
-    ini.setValue(kBalanceName, state.BalanceValue());
-    ini.setValue();
-    ini.setValue();
-    iniSettings.setValue();
-}ini
+    // current state
+    _currentState.SaveToIniFile(iniSettings);
 
-ControlState Configuration::LoadStateFromIniFile(const QSettings& ini)
-{
-
+    // presets
+    iniSettings.beginGroup(kPresetsGroupName);
+    iniSettings.beginWriteArray(kPresetPrefix);
+    int index = 0;
+    Q_FOREACH(QString key, _presets.uniqueKeys())
+    {
+        iniSettings.setArrayIndex(index++);
+        iniSettings.setValue(kPresetNameName, key);
+        _presets[key].SaveToIniFile(iniSettings);
+    }
+    iniSettings.endArray();
+    iniSettings.endGroup();
 }
 
 void Configuration::UpdateCurrentStateIsPreset(

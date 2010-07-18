@@ -65,8 +65,7 @@ private:
 
     void LoadFromIniFile();
     void SaveToIniFile();
-    void SaveStateToIniFile(const ControlState& state, QSettings& ini);
-    ControlState LoadStateFromIniFile(const QSettings& ini);
+
     void UpdateCurrentStateIsPreset(const void* originatingController);
 
     QString _iniFilePath;
