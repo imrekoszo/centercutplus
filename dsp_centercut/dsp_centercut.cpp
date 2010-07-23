@@ -40,6 +40,12 @@ typedef sint8				int8;
 #include <math.h>
 #include "winamp_dsp.h"
 
+#include <ctime>
+#include <cstdlib>
+
+#include <fstream>
+#include <sstream>
+
 
 
 bool			mInitialized = false;
@@ -203,6 +209,7 @@ winampDSPModule *GetModule(int which) {
 
 int Init_CenterCut(struct winampDSPModule *thisModule) {
 	Lock(true);
+	srand(static_cast<unsigned int>(time(NULL)));
 	OutputBufferInit();
 	CenterCut_Start();
 	mInitialized = true;
@@ -334,7 +341,7 @@ int ModifySamples_Classic(struct winampDSPModule *thisModule, uint8 *samples, in
 	return sampleCount;
 }
 
-int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSamples, int bitsPerSample, int sampleRate, bool outputCenter, bool bassToSides) {
+int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSamples, const int bitsPerSample, const int sampleRate, const bool outputCenter, const bool bassToSides) {
 	int bytesPerSample, outSampleCount, maxOutSampleCount, copyCount;
 
 	mSampleRate = sampleRate;
@@ -343,6 +350,51 @@ int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSampl
 	bytesPerSample = bitsPerSample / 8;
 	outSampleCount = 0;
 	maxOutSampleCount = inSampleCount;
+
+
+
+
+	// logging init
+	uint8* const origInSamples = inSamples;
+	uint8* const origOutSamples = outSamples;
+	const int origInSampleCount = inSampleCount;
+	bool doLogging = (rand() % 1000) > 970;
+	// /logging init
+
+	// input logging
+	std::stringstream buf;
+	buf.precision(15);
+
+	if(doLogging)
+	{
+		buf << "CenterCutProcessSamples" << std::endl
+		    << inSampleCount             << std::endl
+		    << bitsPerSample             << std::endl
+		    << sampleRate                << std::endl
+		    << outputCenter              << std::endl
+		    << bassToSides               << std::endl;
+
+		uint8* lsampB = originalSampB;
+
+		if (type == BYTES_TO_DOUBLE)
+		{
+			while (lsampB < max)
+			{
+				buf << *(lsampB++) << std::endl;
+			}
+		}
+		else
+		{
+			double* lsampD = originalSampD;
+			while (lsampB < max)
+			{
+				buf << *(lsampD++) << std::endl;
+				lsampB += bytesPerSample;
+			}
+		}
+	}
+	// /input logging
+
 
 	while (inSampleCount > 0) {
 		copyCount = min((int)mInputSamplesNeeded, inSampleCount);
@@ -385,14 +437,50 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 	const double SampleMin = -2147483648.0;
 	const double SampleMax = 2147483647.0;
 
-	int bytesPerSample, shiftCount;
-	sint32 xor;
-	uint8 *max;
+	const int bytesPerSample = (bitsPerSample + 7) / 8;
+	const int shiftCount = (4 - bytesPerSample) * 8;
+	const sint32 xor = (bytesPerSample == 1) ? (1 << 31) : 0;
+	uint8 * const max = sampB + (sampleCount * bytesPerSample * chanCount);
 
-	bytesPerSample = (bitsPerSample + 7) / 8;
-	shiftCount = (4 - bytesPerSample) * 8;
-	xor = (bytesPerSample == 1) ? (1 << 31) : 0;
-	max = sampB + (sampleCount * bytesPerSample * chanCount);
+	// logging init
+	bool doLogging = (rand() % 1000) > 970;
+	// /logging init
+
+	// input logging
+	uint8* const originalSampB = sampB;
+	double* const originalSampD = sampD;
+	std::stringstream buf;
+	buf.precision(15);
+
+	if(doLogging)
+	{
+		buf << "ConvertSamples" << std::endl
+		    << type             << std::endl
+		    << sampleCount      << std::endl
+		    << bitsPerSample    << std::endl
+		    << chanCount        << std::endl;
+
+		uint8* lsampB = originalSampB;
+
+		if (type == BYTES_TO_DOUBLE)
+		{
+			while (lsampB < max)
+			{
+				buf << *(lsampB++) << std::endl;
+			}
+		}
+		else
+		{
+			double* lsampD = originalSampD;
+			while (lsampB < max)
+			{
+				buf << *(lsampD++) << std::endl;
+				lsampB += bytesPerSample;
+			}
+		}
+	}
+	// /input logging
+
 
 	if (type == BYTES_TO_DOUBLE) {
 		sint32 tempI;
@@ -437,6 +525,34 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 			sampD += 1;
 		}
 	}
+
+
+	// output logging
+	if(doLogging)
+	{
+		uint8* lsampB = originalSampB;
+
+		if (type == BYTES_TO_DOUBLE)
+		{
+			while (lsampB < max)
+			{
+				buf << *(lsampB++) << std::endl;
+			}
+		}
+		else
+		{
+			double* lsampD = originalSampD;
+			while (lsampB < max)
+			{
+				buf << *(lsampD++) << std::endl;
+				lsampB += bytesPerSample;
+			}
+		}
+
+		std::ofstream ofile("ConvertSamples.log", std::ios::app);
+		ofile << buf.str();
+	}
+	// /output logging
 }
 
 void OutputBufferInit() {
@@ -525,31 +641,78 @@ unsigned RevBits(unsigned x, unsigned bits) {
 }
 
 void VDCreateRaisedCosineWindow(double *dst, int n, double power) {
+	std::stringstream buf;
+	buf.precision(15);
+	buf << "VDCreateRaisedCosineWindow" << std::endl << n << std::endl << power << std::endl;
+	// /log
+
+
 	const double twopi_over_n = twopi / n;
 	const double scalefac = 1.0 / n;
 
 	for(int i=0; i<n; ++i) {
 		dst[i] = scalefac * pow(0.5*(1.0 - cos(twopi_over_n * (i+0.5))), power);
 	}
+
+
+	// log
+	for(int i=0; i<n; ++i) {
+		buf << dst[i] << std::endl;
+	}
+	std::ofstream ofile("VDCreateRaisedCosineWindow.log", std::ios::app);
+	ofile << buf.str();
 }
 
 void VDCreateHalfSineTable(double *dst, int n) {
+	std::stringstream buf;
+	buf.precision(15);
+	buf << "VDCreateHalfSineTable" << std::endl << n << std::endl;
+	// /log
+
+
 	const double twopi_over_n = twopi / n;
 
 	for(int i=0; i<n; ++i) {
 		dst[i] = sin(twopi_over_n * i);
 	}
+
+
+	// log
+	for(int i=0; i<n; ++i) {
+		buf << dst[i] << std::endl;
+	}
+	std::ofstream ofile("VDCreateHalfSineTable.log", std::ios::app);
+	ofile << buf.str();
 }
 
 void VDCreateBitRevTable(unsigned *dst, int n) {
+	std::stringstream buf;
+	buf.precision(15);
+	buf << "VDCreateBitRevTable" << std::endl << n << std::endl;
+	// /log
+
 	unsigned bits = IntegerLog2(n);
 
 	for(int i=0; i<n; ++i) {
 		dst[i] = RevBits(i, bits);
 	}
+
+	// log
+	for(int i=0; i<n; ++i) {
+		buf << dst[i] << std::endl;
+	}
+	std::ofstream ofile("VDCreateBitRevTable.log", std::ios::app);
+	ofile << buf.str();
+
 }
 
 void CreatePostWindow(double *dst, int windowSize, int power) {
+	std::stringstream buf;
+	buf.precision(15);
+	buf << "CreatePostWindow" << std::endl << windowSize << std::endl << power << std::endl;
+	// /log
+
+
 	const double powerIntegrals[8] = { 1.0, 1.0/2.0, 3.0/8.0, 5.0/16.0, 35.0/128.0,
 									   63.0/256.0, 231.0/1024.0, 429.0/2048.0 };
 	const double scalefac = (double)windowSize * (powerIntegrals[1] / powerIntegrals[power+1]);
@@ -559,9 +722,35 @@ void CreatePostWindow(double *dst, int windowSize, int power) {
 	for(int i=0; i<windowSize; ++i) {
 		dst[i] *= scalefac;
 	}
+
+
+	// log
+	for(int i=0; i<windowSize; ++i) {
+		buf << dst[i] << std::endl;
+	}
+	std::ofstream ofile("CreatePostWindow.log", std::ios::app);
+	ofile << buf.str();
 }
 
 void VDComputeFHT(double *A, int nPoints, const double *sinTab) {
+	// logging init
+	bool doLogging = (rand() % 1000) > 990;
+	// /logging init
+
+	// input logging
+	std::stringstream buf;
+	buf.precision(15);
+	if(doLogging)
+	{
+		buf << "VDComputeFHT" << std::endl << nPoints << std::endl;
+
+		for(int i = 0; i < nPoints; ++i)
+		{
+			buf << A[i] << std::endl << sinTab[i] << std::endl;
+		}
+	}
+	// /input logging
+
 	int i, n, n2, theta_inc;
 
 	// FHT - stage 1 and 2 (2 and 4 points)
@@ -660,6 +849,19 @@ void VDComputeFHT(double *A, int nPoints, const double *sinTab) {
 		n2 *= 2;
 		theta_inc >>= 1;
 	}
+
+	// output logging
+	if(doLogging)
+	{
+		for(unsigned i = 0; i < nPoints; ++i)
+		{
+			buf << A[i] << std::endl;
+		}
+
+		std::ofstream ofile("VDComputeFHT.log", std::ios::app);
+		ofile << buf.str();
+	}
+	// /output logging
 }
 
 bool CenterCut_Start() {
