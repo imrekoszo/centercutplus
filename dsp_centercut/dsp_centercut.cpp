@@ -89,6 +89,8 @@ double			mTempLBuffer[kWindowSize];
 double			mTempRBuffer[kWindowSize];
 double			mTempCBuffer[kWindowSize];
 
+std::string mLogDir;
+
 
 void Lock(bool bRunning);
 winampDSPModule *GetModule(int which);
@@ -209,7 +211,17 @@ winampDSPModule *GetModule(int which) {
 
 int Init_CenterCut(struct winampDSPModule *thisModule) {
 	Lock(true);
+
+	// INIT LOGGING
 	srand(static_cast<unsigned int>(time(NULL)));
+	const char* cclogdir = std::getenv("CCLOGDIR");
+	mLogDir = cclogdir;
+	if(mLogDir.length() > 0)
+	{
+		mLogDir += "\\";
+	}
+	// /INIT LOGGING
+
 	OutputBufferInit();
 	CenterCut_Start();
 	mInitialized = true;
@@ -355,10 +367,10 @@ int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSampl
 
 
 	// logging init
-	uint8* const origInSamples = inSamples;
-	uint8* const origOutSamples = outSamples;
+	const uint8* const origInSamples = inSamples;
+	const uint8* origOutSamples = outSamples;
 	const int origInSampleCount = inSampleCount;
-	bool doLogging = (rand() % 1000) > 970;
+	const bool doLogging = (rand() % 1000) > 970;
 	// /logging init
 
 	// input logging
@@ -374,23 +386,10 @@ int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSampl
 		    << outputCenter              << std::endl
 		    << bassToSides               << std::endl;
 
-		uint8* lsampB = originalSampB;
-
-		if (type == BYTES_TO_DOUBLE)
+		int count = origInSampleCount *  bitsPerSample / 8 * 2;
+		for(int i = 0; i < count; ++i)
 		{
-			while (lsampB < max)
-			{
-				buf << *(lsampB++) << std::endl;
-			}
-		}
-		else
-		{
-			double* lsampD = originalSampD;
-			while (lsampB < max)
-			{
-				buf << *(lsampD++) << std::endl;
-				lsampB += bytesPerSample;
-			}
+			buf << (uint32)origInSamples[i] << std::endl;
 		}
 	}
 	// /input logging
@@ -427,6 +426,23 @@ int CenterCutProcessSamples(uint8 *inSamples, int inSampleCount, uint8 *outSampl
 			OutputBufferReadComplete();
 		}
 	}
+
+
+	// output logging
+	if(doLogging)
+	{
+		buf << outSampleCount << std::endl;
+
+		while(origOutSamples < outSamples)
+		{
+			buf << (uint32)*(origOutSamples++) << std::endl;
+		}
+
+		std::string path = mLogDir + "CenterCutProcessSamples.log";
+		std::ofstream ofile(path, std::ios::app);
+		ofile << buf.str();
+	}
+	// /output logging
 
 	return outSampleCount;
 }
@@ -466,7 +482,7 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 		{
 			while (lsampB < max)
 			{
-				buf << *(lsampB++) << std::endl;
+				buf << (uint32)*(lsampB++) << std::endl;
 			}
 		}
 		else
@@ -536,7 +552,7 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 		{
 			while (lsampB < max)
 			{
-				buf << *(lsampB++) << std::endl;
+				buf << (uint32)*(lsampB++) << std::endl;
 			}
 		}
 		else
@@ -549,7 +565,8 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 			}
 		}
 
-		std::ofstream ofile("ConvertSamples.log", std::ios::app);
+		std::string path = mLogDir + "ConvertSamples.log";
+		std::ofstream ofile(path, std::ios::app);
 		ofile << buf.str();
 	}
 	// /output logging
@@ -659,7 +676,8 @@ void VDCreateRaisedCosineWindow(double *dst, int n, double power) {
 	for(int i=0; i<n; ++i) {
 		buf << dst[i] << std::endl;
 	}
-	std::ofstream ofile("VDCreateRaisedCosineWindow.log", std::ios::app);
+	std::string path = mLogDir + "VDCreateRaisedCosineWindow.log";
+	std::ofstream ofile(path, std::ios::app);
 	ofile << buf.str();
 }
 
@@ -681,7 +699,8 @@ void VDCreateHalfSineTable(double *dst, int n) {
 	for(int i=0; i<n; ++i) {
 		buf << dst[i] << std::endl;
 	}
-	std::ofstream ofile("VDCreateHalfSineTable.log", std::ios::app);
+	std::string path = mLogDir + "VDCreateHalfSineTable.log";
+	std::ofstream ofile(path, std::ios::app);
 	ofile << buf.str();
 }
 
@@ -701,7 +720,8 @@ void VDCreateBitRevTable(unsigned *dst, int n) {
 	for(int i=0; i<n; ++i) {
 		buf << dst[i] << std::endl;
 	}
-	std::ofstream ofile("VDCreateBitRevTable.log", std::ios::app);
+	std::string path = mLogDir + "VDCreateBitRevTable.log";
+	std::ofstream ofile(path, std::ios::app);
 	ofile << buf.str();
 
 }
@@ -728,7 +748,8 @@ void CreatePostWindow(double *dst, int windowSize, int power) {
 	for(int i=0; i<windowSize; ++i) {
 		buf << dst[i] << std::endl;
 	}
-	std::ofstream ofile("CreatePostWindow.log", std::ios::app);
+	std::string path = mLogDir + "CreatePostWindow.log";
+	std::ofstream ofile(path, std::ios::app);
 	ofile << buf.str();
 }
 
@@ -858,7 +879,8 @@ void VDComputeFHT(double *A, int nPoints, const double *sinTab) {
 			buf << A[i] << std::endl;
 		}
 
-		std::ofstream ofile("VDComputeFHT.log", std::ios::app);
+		std::string path = mLogDir + "VDComputeFHT.log";
+		std::ofstream ofile(path, std::ios::app);
 		ofile << buf.str();
 	}
 	// /output logging
