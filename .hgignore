@@ -56,3 +56,5 @@ hgignore[.-]*
 ignore[.-]*
 svnignore[.-]*
 [Ii]pch/
+*-build-desktop/
+*.*.orig
