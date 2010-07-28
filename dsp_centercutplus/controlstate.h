@@ -12,9 +12,10 @@ public:
     ControlState();
     ControlState(const ControlState& from);
     ControlState(int cutModeValue, int frequencyValue,
-                 int centerManipulationMode,
-                 int balanceValue, int balanceMode);
+                 CenterManipulationMode centerManipulationMode,
+                 int balanceValue, BalanceMode balanceMode);
     bool operator==(const ControlState& to) const;
+    bool operator!=(const ControlState& to) const;
     ControlState& operator=(const ControlState& from);
 
     int CutModeValue() const;
@@ -33,11 +34,11 @@ public:
     bool LoadFromIniFile(const QSettings& ini);
 
 private:
+    BalanceMode _balanceModeValue;
+    int _balanceValue;
+    CenterManipulationMode _centerManipulationModeValue;
     int _cutModeValue;
     int _frequencyValue;
-    CenterManipulationMode _centerManipulationModeValue;
-    int _balanceValue;
-    BalanceMode _balanceModeValue;
 };
 
 #endif // CONTROLSTATE_H

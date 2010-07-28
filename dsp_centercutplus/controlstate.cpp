@@ -30,8 +30,8 @@ ControlState::ControlState(const ControlState& from)
 }
 
 ControlState::ControlState(int cutModeValue, int frequencyValue,
-                           int centerManipulationModeValue,
-                           int balanceValue, int balanceModeValue)
+                           CenterManipulationMode centerManipulationModeValue,
+                           int balanceValue, BalanceMode balanceModeValue)
     : _balanceModeValue(balanceModeValue),
     _balanceValue(balanceValue),
     _centerManipulationModeValue(centerManipulationModeValue),
@@ -42,17 +42,22 @@ ControlState::ControlState(int cutModeValue, int frequencyValue,
 
 bool ControlState::operator==(const ControlState& to) const
 {
-    return  this == &to ||
-            (_balanceModeValue == to._balanceModeValue
-            && _balanceValue == to._balanceValue
-            && _centerManipulationModeValue == to._centerManipulationModeValue
-            && _cutModeValue == to._cutModeValue
-            && _frequencyValue == to._frequencyValue);
+    return !(this->operator !=(to));
+}
+
+bool ControlState::operator!=(const ControlState& to) const
+{
+    return  this != &to &&
+            (_balanceModeValue != to._balanceModeValue
+            || _balanceValue != to._balanceValue
+            || _centerManipulationModeValue != to._centerManipulationModeValue
+            || _cutModeValue != to._cutModeValue
+            || _frequencyValue != to._frequencyValue);
 }
 
 ControlState& ControlState::operator=(const ControlState& from)
 {
-    if(this != &to) // Gracefully handle self assignment
+    if(this != &from) // Gracefully handle self assignment
     {
         _balanceModeValue = from._balanceModeValue;
         _balanceValue = from._balanceValue;
@@ -73,7 +78,8 @@ inline int ControlState::FrequencyValue() const
     return _frequencyValue;
 }
 
-inline CenterManipulationMode ControlState::CenterManipulationModeValue() const
+inline ControlState::CenterManipulationMode
+        ControlState::CenterManipulationModeValue() const
 {
     return _centerManipulationModeValue;
 }
@@ -83,7 +89,7 @@ inline int ControlState::BalanceValue() const
     return _balanceValue;
 }
 
-inline BalanceMode ControlState::BalanceModeValue() const
+inline ControlState::BalanceMode ControlState::BalanceModeValue() const
 {
     return _balanceModeValue;
 }

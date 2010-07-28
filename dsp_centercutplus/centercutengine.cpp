@@ -57,7 +57,8 @@ int CenterCutEngine::ModifySamples(uint8_t* samples, int sampleCount,
             && (sampleCount > 0)
             && BPSIsValid(bitsPerSample)
             && _isInitialized
-            && !Config::IsBypassed())
+            && false  //&& !Config::IsBypassed() // TODO
+            )
     {
         int outSampleCount = ProcessSamples(samples, sampleCount, samples,
                                             bitsPerSample, sampleRate);
@@ -274,7 +275,7 @@ void CenterCutEngine::ConvertSamples(int type, uint8_t *sampB, double *sampD,
 }
 
 void CenterCutEngine::Run()
-{
+{/*
     // copy to temporary buffer and FHT
     for(size_t i = 0; i < consts::cce::WindowSize; ++i)
     {
@@ -397,5 +398,5 @@ void CenterCutEngine::Run()
 
     _inputSamplesNeeded = consts::cce::OverlapSize;
 
-    return;
+    return;*/
 }

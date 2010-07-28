@@ -69,7 +69,7 @@ inline void Configuration::SelectPreset(
         const void* originatingController //= NULL
         )
 {
-    if(name == _currentStateName || !_presets.contains(name))
+    if(!_presets.contains(name))
     {
         return;
     }
@@ -126,7 +126,7 @@ void Configuration::SetCutMode(
         const void* originatingController //= NULL
         )
 {
-    _currentState.CutModeValue() = value;
+    _currentState.CutModeValue(value);
     Q_EMIT CurrentStatePropertyChanged(originatingController);
     UpdateCurrentStateIsPreset(originatingController);
 }
@@ -136,7 +136,7 @@ void Configuration::SetFrequency(
         const void* originatingController //= NULL
         )
 {
-    _currentState.FrequencyValue() = value;
+    _currentState.FrequencyValue(value);
     Q_EMIT CurrentStatePropertyChanged(originatingController);
     UpdateCurrentStateIsPreset(originatingController);
 }
@@ -146,7 +146,7 @@ void Configuration::SetCenterManipulationMode(
         const void* originatingController //= NULL
         )
 {
-    _currentState.CenterManipulationModeValue() = value;
+    _currentState.CenterManipulationModeValue(value);
     Q_EMIT CurrentStatePropertyChanged(originatingController);
     UpdateCurrentStateIsPreset(originatingController);
 }
@@ -156,7 +156,7 @@ void Configuration::SetBalance(
         const void* originatingController //= NULL
         )
 {
-    _currentState.BalanceValue() = value;
+    _currentState.BalanceValue(value);
     Q_EMIT CurrentStatePropertyChanged(originatingController);
     UpdateCurrentStateIsPreset(originatingController);
 }
@@ -166,7 +166,7 @@ void Configuration::SetBalanceMode(
         const void* originatingController //= NULL
         )
 {
-    _currentState.BalanceModeValue() = value;
+    _currentState.BalanceModeValue(value);
     Q_EMIT CurrentStatePropertyChanged(originatingController);
     UpdateCurrentStateIsPreset(originatingController);
 }
@@ -220,7 +220,7 @@ void Configuration::SaveToIniFile()
     iniSettings.beginGroup(kPresetsGroupName);
     iniSettings.beginWriteArray(kPresetPrefix);
     int index = 0;
-    Q_FOREACH(QString key, _presets.uniqueKeys())
+    Q_FOREACH(const QString& key, _presets.uniqueKeys())
     {
         iniSettings.setArrayIndex(index++);
         iniSettings.setValue(kPresetNameName, key);
