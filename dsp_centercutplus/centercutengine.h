@@ -12,6 +12,7 @@
 
 // local headers
 #include "classhelpers.h"
+#include "globals.h"
 
 // class-wide constants
 namespace consts
@@ -26,7 +27,7 @@ namespace consts
 }
 
 
-class CenterCutEngine
+class DSP_CENTERCUTPLUSSHARED_EXPORT CenterCutEngine
 {
 public:
     CenterCutEngine();

@@ -11,7 +11,7 @@
 #include "classhelpers.h"
 #include "controlstate.h"
 
-class Configuration
+class Configuration : QObject
 {
 public:
     Configuration();

@@ -1,3 +1,5 @@
+#include "controlstate.h"
+
 #include "configuration.h"
 
 #include <QList>
@@ -22,40 +24,40 @@ Configuration::Configuration()
 {
 }
 
-inline void Configuration::Init(const QString& iniFilePath)
+void Configuration::Init(const QString& iniFilePath)
 {
     _iniFilePath = iniFilePath;
     LoadFromIniFile();
 }
 
-inline bool Configuration::IsBypassed() const
+bool Configuration::IsBypassed() const
 {
     return _isBypassed;
 }
 
-inline bool Configuration::CurrentStateIsPreset() const
+bool Configuration::CurrentStateIsPreset() const
 {
     return _currentStateIsPreset;
 }
 
-inline const QString& Configuration::LastPresetName() const
+const QString& Configuration::LastPresetName() const
 {
     return _lastPresetName;
 }
 
-inline const ControlState& Configuration::CurrentState() const
+const ControlState& Configuration::CurrentState() const
 {
     return _currentState;
 }
 
-inline QList<QString> Configuration::PresetNames() const
+QList<QString> Configuration::PresetNames() const
 {
     return _presets.uniqueKeys();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline void Configuration::SetBypassed(
+void Configuration::SetBypassed(
         bool value,
         const void* originatingController //= NULL
         )
@@ -64,7 +66,7 @@ inline void Configuration::SetBypassed(
     Q_EMIT IsBypassedChanged(originatingController);
 }
 
-inline void Configuration::SelectPreset(
+void Configuration::SelectPreset(
         const QString& name,
         const void* originatingController //= NULL
         )

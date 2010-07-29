@@ -68,46 +68,46 @@ ControlState& ControlState::operator=(const ControlState& from)
     return *this;
 }
 
-inline int ControlState::CutModeValue() const
+int ControlState::CutModeValue() const
 {
     return _cutModeValue;
 }
 
-inline int ControlState::FrequencyValue() const
+int ControlState::FrequencyValue() const
 {
     return _frequencyValue;
 }
 
-inline ControlState::CenterManipulationMode
+ControlState::CenterManipulationMode
         ControlState::CenterManipulationModeValue() const
 {
     return _centerManipulationModeValue;
 }
 
-inline int ControlState::BalanceValue() const
+int ControlState::BalanceValue() const
 {
     return _balanceValue;
 }
 
-inline ControlState::BalanceMode ControlState::BalanceModeValue() const
+ControlState::BalanceMode ControlState::BalanceModeValue() const
 {
     return _balanceModeValue;
 }
 
-inline void ControlState::CutModeValue(int value)
+void ControlState::CutModeValue(int value)
 {
     // TODO: range checking
     _cutModeValue = value;
 }
 
-inline void ControlState::FrequencyValue(int value)
+void ControlState::FrequencyValue(int value)
 {
     // TODO: range checking
     _frequencyValue = value;
 }
 
-inline void ControlState::CenterManipulationModeValue(
-        CenterManipulationMode value)
+void ControlState::CenterManipulationModeValue(
+        ControlState::CenterManipulationMode value)
 {
     if(value == CMM_HIGHTOSIDES || value == CMM_LOWTOSIDES || value == CMM_OFF)
     {
@@ -115,13 +115,13 @@ inline void ControlState::CenterManipulationModeValue(
     }
 }
 
-inline void ControlState::BalanceValue(int value)
+void ControlState::BalanceValue(int value)
 {
     // TODO: range checking
     _balanceValue = value;
 }
 
-inline void ControlState::BalanceModeValue(BalanceMode value)
+void ControlState::BalanceModeValue(ControlState::BalanceMode value)
 {
     if(value == BM_CUTTER || value == BM_FILLER || value == BM_MONO)
     {
@@ -147,13 +147,13 @@ bool ControlState::LoadFromIniFile(const QSettings& ini)
 
     balmode = ini.value(kBalanceModeName).toInt(&ok);
     allok &= ok;
-    ini.value(kBalanceName).toInt(&ok);
+    bal = ini.value(kBalanceName).toInt(&ok);
     allok &= ok;
-    ini.value(kCenterManipulationModeName).toInt(&ok);
+    cmmode = ini.value(kCenterManipulationModeName).toInt(&ok);
     allok &= ok;
-    ini.value(kCutModeName).toInt(&ok);
+    cutmode = ini.value(kCutModeName).toInt(&ok);
     allok &= ok;
-    ini.value(kFrequencyName).toInt(&ok);
+    freq = ini.value(kFrequencyName).toInt(&ok);
     allok &= ok;
 
     if(!allok)

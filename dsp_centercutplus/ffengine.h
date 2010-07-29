@@ -3,8 +3,9 @@
 
 // local headers
 #include "classhelpers.h"
+#include "globals.h"
 
-class FFEngine
+class DSP_CENTERCUTPLUSSHARED_EXPORT FFEngine
 {
 public:
     static unsigned IntegerLog2(unsigned v);
