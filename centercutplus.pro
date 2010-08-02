@@ -1,3 +1,4 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = dsp_centercutplus
+SUBDIRS = dsp_centercutplus \
+          centercutplustests
