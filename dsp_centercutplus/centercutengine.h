@@ -26,9 +26,10 @@ namespace consts
     }
 }
 
-
+class CentercutplustestsTest;
 class DSP_CENTERCUTPLUSSHARED_EXPORT CenterCutEngine
 {
+    friend class CentercutplustestsTest;
 public:
     CenterCutEngine();
     int Init();

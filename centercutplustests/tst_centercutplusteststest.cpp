@@ -1,4 +1,4 @@
-#include <cstdint>
+#include <stdint.h>
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
@@ -6,6 +6,7 @@
 #include <QtCore/QString>
 #include <QtTest/QtTest>
 
+#include <dsp_centercutplus/centercutengine.h>
 #include <dsp_centercutplus/ffengine.h>
 
 class CentercutplustestsTest : public QObject
@@ -73,13 +74,34 @@ void CentercutplustestsTest::CenterCutProcessSamplesTest()
 
 void CentercutplustestsTest::ConvertSamplesTest()
 {
-    QVERIFY2(false, "Test case incomplete");
+    QFETCH(int, type);
+    QFETCH(byteVector_type, sampB);
+    QFETCH(doubleVector_type, sampD);
+    QFETCH(int, sampleCount);
+    QFETCH(int, bitsPerSample);
+    QFETCH(int, chanCount);
+    QFETCH(byteVector_type, expectedSampB);
+    QFETCH(doubleVector_type, expectedSampD);
+
+    static const int BYTES_TO_DOUBLE = 0;
+    CenterCutEngine sut;
+    sut.ConvertSamples(type, sampB.begin(), sampD.begin(), sampleCount,
+                       bitsPerSample, chanCount);
+
+    if(type == BYTES_TO_DOUBLE)
+    {
+        QVERIFY(std::equal(sampD.begin(), sampD.end(), expectedSampD.begin(),
+                           doubleEquals));
+    }
+    else
+    {
+        QCOMPARE(sampB, expectedSampB);
+    }
 }
 
 void CentercutplustestsTest::ConvertSamplesTest_data()
 {
     static const int BYTES_TO_DOUBLE = 0;
-    static const int DOUBLE_TO_BYTES = 1;
 
     const std::string testName = "ConvertSamples";
     std::ifstream ifile((_logDir + testName + dataFileExt).c_str());
@@ -99,17 +121,60 @@ void CentercutplustestsTest::ConvertSamplesTest_data()
     while(ifile >> header && header == testName)
     {
         int type, sampleCount, bitsPerSample, chanCount;
-        byteVector_type sampB
 
         if(!(ifile >> type >> sampleCount >> bitsPerSample >> chanCount))
         {
             continue;
         }
 
+        const int bytesPerSample = (bitsPerSample + 7) / 8;
+        const int bCount = sampleCount * bytesPerSample * chanCount;
+        const int dCount = sampleCount * chanCount;
+        byteVector_type sampB(bCount), expectedSampB(bCount);
+        doubleVector_type sampD(dCount), expectedSampD(dCount);
+
         if(type == BYTES_TO_DOUBLE)
         {
+            uint32_t bBuffer;
+            for(int i = 0; i < bCount && ifile >> bBuffer; ++i)
+            {
+                sampB[i] = static_cast<uint8_t>(bBuffer);
+            }
 
+            double expectedBuffer;
+            for(int i = 0; i < dCount && ifile >> expectedBuffer; ++i)
+            {
+                expectedSampD[i] = expectedBuffer;
+            }
+
+            if(sampB.count() != bCount || expectedSampD.count() != dCount)
+            {
+                continue;
+            }
         }
+        else
+        {
+            double dBuffer;
+            for(int i = 0; i < dCount && ifile >> dBuffer; ++i)
+            {
+                sampD[i] = dBuffer;
+            }
+
+            uint32_t expectedBuffer;
+            for(int i = 0; i < bCount && ifile >> expectedBuffer; ++i)
+            {
+                expectedSampB[i] = static_cast<uint8_t>(expectedBuffer);
+            }
+
+            if(sampD.count() != dCount || expectedSampB.count() != bCount)
+            {
+                continue;
+            }
+        }
+
+        QTest::newRow(testCaseName.arg(testCaseIndex++).toLocal8Bit().data())
+                << type << sampB << sampD << sampleCount << bitsPerSample
+                << chanCount << expectedSampB << expectedSampD;
     }
 }
 
