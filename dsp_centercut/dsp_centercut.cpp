@@ -550,18 +550,18 @@ void ConvertSamples(int type, uint8 *sampB, double *sampD, int sampleCount, int 
 
 		if (type == BYTES_TO_DOUBLE)
 		{
-			while (lsampB < max)
-			{
-				buf << (uint32)*(lsampB++) << std::endl;
-			}
-		}
-		else
-		{
 			double* lsampD = originalSampD;
 			while (lsampB < max)
 			{
 				buf << *(lsampD++) << std::endl;
 				lsampB += bytesPerSample;
+			}
+		}
+		else
+		{
+			while (lsampB < max)
+			{
+				buf << (uint32)*(lsampB++) << std::endl;
 			}
 		}
 
