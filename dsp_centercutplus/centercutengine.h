@@ -14,6 +14,9 @@
 #include "classhelpers.h"
 #include "globals.h"
 
+// forward declarations
+class Configuration;
+
 // class-wide constants
 namespace consts
 {
@@ -32,7 +35,7 @@ class DSP_CENTERCUTPLUSSHARED_EXPORT CenterCutEngine
     friend class CentercutplustestsTest;
 public:
     CenterCutEngine();
-    int Init();
+    int Init(const Configuration * configuration);
     void Quit();
     int ModifySamples(uint8_t* samples, int sampleCount,
                       int bitsPerSample, int chanCount, int sampleRate);
@@ -62,6 +65,7 @@ private:
     void Run(); // TODO: rename?
 
     // private fields
+    const Configuration * _configuration;
     bool    _isInitialized;
 
     int     _outputReadSampleOffset;

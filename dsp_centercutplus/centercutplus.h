@@ -7,10 +7,13 @@
 // library headers
 #include <QMutex>
 #include <windows.h>
+#include <boost/scoped_ptr.hpp>
 
 // local headers
 #include "centercutengine.h"
 #include "classhelpers.h"
+#include "configuration.h"
+#include "centercutplusdialog.h"
 
 // forward declarations
 struct winampDSPModule;
@@ -20,7 +23,7 @@ class CenterCutPlus
 {
 public:
     CenterCutPlus() { }
-    static const char* LongName()  { return "Center Cut Plus v10.25.0.0"; }
+    static const char* LongName()  { return "Center Cut Plus v10.59.0.0"; }
     static const char* ShortName() { return "Center Cut Plus"; }
     static BOOL DllMain(ULONG reasonForCall);
     static winampDSPModule* GetModule(int which);
@@ -39,8 +42,12 @@ private:
                               int sampleCount, int bitsPerSample, int chanCount,
                               int sampleRate);
 
+    QString GetIniFilePath(HMODULE hModule);
+
     QMutex _mutex;
     CenterCutEngine _engine;
+    Configuration _configuration;
+    boost::scoped_ptr<CenterCutPlusDialog> _centerCutPlusDialog;
 
     DISALLOW_COPY_AND_ASSIGN(CenterCutPlus);
 };

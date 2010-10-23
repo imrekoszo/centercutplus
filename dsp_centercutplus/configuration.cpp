@@ -15,7 +15,7 @@ namespace
 }
 
 Configuration::Configuration()
-    : _iniFilePath(""),
+    : _iniFilePath(),
       _isBypassed(true),
       _presets(),
       _currentState(),
@@ -24,10 +24,15 @@ Configuration::Configuration()
 {
 }
 
-void Configuration::Init(const QString& iniFilePath)
+void Configuration::Load(const QString& iniFilePath)
 {
     _iniFilePath = iniFilePath;
     LoadFromIniFile();
+}
+
+void Configuration::Save()
+{
+    SaveToIniFile();
 }
 
 bool Configuration::IsBypassed() const

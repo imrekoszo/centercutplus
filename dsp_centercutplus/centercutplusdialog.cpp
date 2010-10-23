@@ -1,9 +1,13 @@
+// local headers
 #include "centercutplusdialog.h"
 #include "ui_centercutplusdialog.h"
+#include "configuration.h"
 
-CenterCutPlusDialog::CenterCutPlusDialog(QWidget *parent) :
+CenterCutPlusDialog::CenterCutPlusDialog(const Configuration* configuration,
+                                         QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CenterCutPlusDialog)
+    ui(new Ui::CenterCutPlusDialog),
+    _configuration(configuration)
 {
     ui->setupUi(this);
 }

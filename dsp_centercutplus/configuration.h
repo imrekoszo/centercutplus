@@ -16,7 +16,8 @@ class Configuration : QObject
 public:
     Configuration();
 
-    void Init(const QString& iniFilePath);
+    void Load(const QString& iniFilePath);
+    void Save();
 
     bool IsBypassed() const;
     bool CurrentStateIsPreset() const;

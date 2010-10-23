@@ -6,9 +6,13 @@
 #include <stdint.h>
 #include <string.h>
 
+// library headers
+#include <boost/multi_array.hpp>
+
 // local headers
 #include "ffengine.h"
 #include "globals.h"
+#include "configuration.h"
 
 
 // locals
@@ -35,8 +39,9 @@ CenterCutEngine::CenterCutEngine() :
 {
 }
 
-int CenterCutEngine::Init()
+int CenterCutEngine::Init(const Configuration * configuration)
 {
+    _configuration = configuration;
     InitOutputBuffers();
     Start();
     _isInitialized = true;

@@ -7,9 +7,12 @@
 // library headers
 #include <windows.h>
 #include <QMessageBox>
+#include <boost/scoped_array.hpp>
 
 // local headers
 #include "winamp_dsp.h"
+#include "configuration.h"
+#include "centercutplusdialog.h"
 
 
 // locals
@@ -65,28 +68,31 @@ int CenterCutPlus::Init(winampDSPModule* thisModule)
     return Instance().InternalInit(thisModule);
 }
 
-int CenterCutPlus::InternalInit(winampDSPModule* /*thisModule*/)
+int CenterCutPlus::InternalInit(winampDSPModule* thisModule)
 {
     QMutexLocker lock(&_mutex);
 
-    // TODO: create config window
+    _configuration.Load(GetIniFilePath(thisModule->hDllInstance));
+    _centerCutPlusDialog.reset(new CenterCutPlusDialog(&_configuration));
+    ::SetParent(_centerCutPlusDialog->winId(), thisModule->hwndParent);
 
-    return _engine.Init();
+    return _engine.Init(&_configuration);
 }
 
 void CenterCutPlus::Quit(winampDSPModule* thisModule)
 {
-    return Instance().InternalQuit(thisModule);
+    Instance().InternalQuit(thisModule);
 }
 
 void CenterCutPlus::InternalQuit(winampDSPModule* /*thisModule*/)
 {
     QMutexLocker lock(&_mutex);
 
-    // TODO: destroy config window
+    _centerCutPlusDialog.reset();
     // TODO: DelayDllUnload(tököm);
 
     _engine.Quit();
+    _configuration.Save();
 }
 
 int CenterCutPlus::ModifySamples(winampDSPModule* thisModule, uint8_t* samples,
@@ -106,4 +112,36 @@ int CenterCutPlus::InternalModifySamples(winampDSPModule* /*thisModule*/,
     QMutexLocker lock(&_mutex);
     return _engine.ModifySamples(samples, sampleCount, bitsPerSample, chanCount,
                                  sampleRate);
+}
+
+QString CenterCutPlus::GetIniFilePath(HMODULE hModule)
+{
+    const uint32_t bufferInitialSize = MAX_PATH + 10;
+
+    // static approach
+    wchar_t buffer[bufferInitialSize];
+    buffer[bufferInitialSize - 1] = 0;
+    DWORD result = ::GetModuleFileNameW(hModule, buffer, bufferInitialSize);
+
+    if(result == 0)
+    {
+        return QString();
+    }
+    else if (result < bufferInitialSize)
+    {
+        return QString::fromWCharArray(buffer);
+    }
+
+    // dynamic approach
+    uint32_t i = 1, size;
+    boost::scoped_array<wchar_t> dynBuffer(NULL);
+    do
+    {
+        size = bufferInitialSize * ++i;
+        dynBuffer.reset(new wchar_t[size]);
+        dynBuffer[size - 1] = 0;
+        result = ::GetModuleFileNameW(hModule, dynBuffer.get(), size);
+    } while (result == size);
+
+    return QString::fromWCharArray(dynBuffer.get());
 }

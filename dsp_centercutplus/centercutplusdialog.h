@@ -1,7 +1,11 @@
 #ifndef CENTERCUTPLUSDIALOG_H
 #define CENTERCUTPLUSDIALOG_H
 
+// library headers
 #include <QDialog>
+
+// forward declarations
+class Configuration;
 
 namespace Ui {
     class CenterCutPlusDialog;
@@ -10,7 +14,7 @@ namespace Ui {
 class CenterCutPlusDialog : public QDialog {
     Q_OBJECT
 public:
-    CenterCutPlusDialog(QWidget *parent = 0);
+    CenterCutPlusDialog(const Configuration* configuration, QWidget *parent = 0);
     ~CenterCutPlusDialog();
 
 protected:
@@ -18,6 +22,7 @@ protected:
 
 private:
     Ui::CenterCutPlusDialog *ui;
+    const Configuration * _configuration;
 
 public Q_SLOTS:
     void addClicked();
