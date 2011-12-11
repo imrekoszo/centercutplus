@@ -71,13 +71,13 @@ bool CenterCut_Run();
 
 #define MODE_0 modClassic
 #define MODE_1 modUlti
-#define TITLE "Center Cut Plus v10.24.1.0 Classic"
+#define TITLE "Center Cut Plus v10.24.1.1 Classic"
 
 #else
 
 #define MODE_0 modUlti
 #define MODE_1 modClassic
-#define TITLE "Center Cut Plus v10.24.1.0"
+#define TITLE "Center Cut Plus v10.24.1.1"
 
 #endif
 

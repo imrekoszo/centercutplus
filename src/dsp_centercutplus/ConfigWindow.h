@@ -33,10 +33,21 @@ class ConfigWindow
 		static DWORD activePresetKey = 0x00000000;
 		return activePresetKey;
 	}
+	static HINSTANCE& _hInstance()
+	{
+		static HINSTANCE hInstance = NULL;
+		return hInstance;
+	}
+	static HICON& _hIcon()
+	{
+		static HICON hIcon = NULL;
+		return hIcon;
+	}
 
 public:
 	static void CreateConfigWindow(HINSTANCE hInst, HWND hParentWnd);
 	static void DestroyConfigWindow();
+	static void ShowAboutBox(HWND parentWnd = NULL);
 
 private:
 	ConfigWindow();
@@ -49,4 +60,6 @@ private:
 	static void DeleteSelectedPreset();
 	static void AddPreset();
 	static void SliderValueChanged();
+	static void InitIcon();
+	static void TryStealIconFromApplication();
 };

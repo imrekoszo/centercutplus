@@ -5,13 +5,17 @@
 #include <Shlwapi.h>
 #include "ConfigWindow.h"
 #include <WindowsX.h>
+#include <Psapi.h>
 #include "PositionHelper.h"
 
 // NOTE: disable stupid enum warning
 #pragma warning(disable : 4482)
 
+#define IDM_ABOUT 0x0001
+
 void ConfigWindow::CreateConfigWindow(HINSTANCE hInst, HWND hParentWnd)
 {
+	_hInstance() = hInst;
 	InitConfig(static_cast<HMODULE>(hInst));
 	_parentWnd() = hParentWnd;
 	::CreateDialog(hInst, MAKEINTRESOURCE(IDD_CONFIG), NULL, ConfigWindowProc);
@@ -59,12 +63,10 @@ INT_PTR CALLBACK ConfigWindow::ConfigWindowProc(HWND hDlg, UINT message, WPARAM 
 				InitPresets();
 				SetCheck(_hwnd(), IDC_BYPASS, Config::IsBypassed());
 
-				//HICON icon = reinterpret_cast<HICON>(
-				//	::SendMessage(_parentWnd(), WM_GETICON, static_cast<WPARAM>(ICON_BIG), static_cast<LPARAM>(0)));
-				//::SendMessage(_hwnd(), WM_SETICON, static_cast<WPARAM>(ICON_BIG), reinterpret_cast<LPARAM>(icon));
-				//icon = reinterpret_cast<HICON>(
-				//	::SendMessage(_parentWnd(), WM_GETICON, static_cast<WPARAM>(ICON_SMALL), static_cast<LPARAM>(0)));
-				//::SendMessage(_hwnd(), WM_SETICON, static_cast<WPARAM>(ICON_SMALL), reinterpret_cast<LPARAM>(icon));
+				InitIcon();
+
+				HMENU systemMenu = ::GetSystemMenu(_hwnd(), FALSE);
+				::AppendMenu(systemMenu, MF_STRING, IDM_ABOUT, "About...");
 			}
 			return static_cast<INT_PTR>(TRUE);
 
@@ -117,8 +119,46 @@ INT_PTR CALLBACK ConfigWindow::ConfigWindowProc(HWND hDlg, UINT message, WPARAM 
 				PresetSelectionChanged();
 			}
 			break;
+		case WM_SYSCOMMAND:
+			if(wParam == IDM_ABOUT)
+			{
+				ShowAboutBox();
+			}
+			break;
+		case WM_DESTROY:
+			if(_hIcon())
+			{
+				::DestroyIcon(_hIcon());
+				_hIcon() = NULL;
+			}
+			break;
 	}
 	return static_cast<INT_PTR>(FALSE);
+}
+
+void ConfigWindow::InitIcon()
+{
+	TryStealIconFromApplication();
+	if(_hIcon())
+	{
+		::SendMessage(_hwnd(), WM_SETICON, static_cast<WPARAM>(ICON_BIG), reinterpret_cast<LPARAM>(_hIcon()));
+		::SendMessage(_hwnd(), WM_SETICON, static_cast<WPARAM>(ICON_SMALL), reinterpret_cast<LPARAM>(_hIcon()));
+	}
+}
+
+void ConfigWindow::TryStealIconFromApplication()
+{
+	TCHAR buffer[1000];
+	WORD piIcon;
+	HMODULE hm;
+	DWORD count;
+	if(::EnumProcessModules(::GetCurrentProcess(), &hm, sizeof(hm), &count))
+	{
+		if(::GetModuleFileName(hm, buffer, sizeof(buffer)))
+		{
+			_hIcon() = ::ExtractAssociatedIcon(_hInstance(), buffer, &piIcon);
+		}
+	}
 }
 
 void ConfigWindow::ApplyActivePreset()
@@ -244,4 +284,23 @@ void ConfigWindow::SliderValueChanged()
 	Config::GetPreset().CenterSlider = GetSliderPos(_hwnd(), IDC_CENTER);
 	Config::GetPreset().FreqSlider = GetSliderPos(_hwnd(), IDC_FREQ);
 	RefreshSliderValueDisplays();
+}
+
+void ConfigWindow::ShowAboutBox(HWND parentWnd)
+{
+	if(parentWnd == NULL)
+	{
+		parentWnd = _hwnd();
+	}
+
+	MessageBox(parentWnd, "dsp_centercut plus v10.24.1.1\n"
+						  "Copyright 2010-2011 Ngetal\n"
+						  "https://code.google.com/p/centercutplus/"
+						  "\n\n"
+						  "Based on dsp_centercut v1.4.0\n"
+						  "Copyright 2004-2007 Moitah\n"
+						  "http://www.moitah.net"
+						  "\n\n"
+						  "Based on VirtualDub's Center Cut filter by Avery Lee.",
+						  "About", MB_OK);
 }
