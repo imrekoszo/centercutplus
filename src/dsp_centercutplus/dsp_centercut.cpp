@@ -19,12 +19,15 @@
 *                                                                              *
 *******************************************************************************/
 
+#include <math.h>
+
 #include "general.h"
-#include "winamp_dsp.h"
+
+#include <winamp\winamp_dsp.h>
+
 #include "PositionHelper.h"
 #include "configwindow.h"
 #include "dsp_centercut.h"
-#include <math.h>
 
 // NOTE: disable stupid enum warning
 #pragma warning(disable : 4482)

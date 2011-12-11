@@ -65,16 +65,17 @@
     <ClInclude Include="types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="winamp_dsp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="IView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="dsp_centercut.rc">
+    <ResourceCompile Include="dsp_centercutplus.rc">
       <Filter>Resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="GPL.txt" />
+    <None Include="buildtools\postbuild.bat" />
   </ItemGroup>
 </Project>

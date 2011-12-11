@@ -18,6 +18,7 @@ syntax: glob
 *.sdf
 *.nlb
 *.obj
+*.opensdf
 *.patch
 *.pch
 *.pdb    
@@ -56,3 +57,4 @@ hgignore[.-]*
 ignore[.-]*
 svnignore[.-]*
 [Ii]pch/
+src/dsp_centercutplus/buildtools/localpostbuildcommand.bat
