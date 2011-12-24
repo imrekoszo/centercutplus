@@ -46,10 +46,10 @@ Backup*
 CVS/
 PrecompiledWeb/
 UpgradeLog*.*
-[Bb]in/
-[Dd]ebug/
-[Oo]bj/
-[Rr]elease/
+src/**/[Bb]in/
+src/**/[Dd]ebug/
+src/**/[Oo]bj/
+src/**/[Rr]elease/
 [Tt]humbs.db
 _UpgradeReport_Files
 _[Rr]e[Ss]harper.*/
