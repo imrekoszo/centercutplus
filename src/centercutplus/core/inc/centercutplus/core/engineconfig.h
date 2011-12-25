@@ -6,6 +6,7 @@
 
 #include "centerdetectionmode.h"
 #include "frequencyinterval.h"
+#include "types.h"
 
 namespace ccp
 {
@@ -18,10 +19,6 @@ namespace core
 ///
 class EngineConfig : boost::noncopyable
 {
-    // typedefs
-  public:
-    typedef boost::ptr_vector<FrequencyInterval> FrequencyIntervalVector;
-
     // consts
   public:
     static const int kMinPercent;
@@ -43,20 +40,16 @@ class EngineConfig : boost::noncopyable
     int centerToRightPercent() const;
     int rightToRightPercent() const;
 
-    void centerDetectionMode(CenterDetectionMode value);
+    EngineConfig& centerDetectionMode(CenterDetectionMode value);
     FrequencyIntervalVector& centerToSidesFrequencyIntervals();
-    void leftToLeftPercent(int value);
-    void centerToLeftPercent(int value);
-    void rightToLeftPercent(int value);
-    void leftToRightPercent(int value);
-    void centerToRightPercent(int value);
-    void rightToRightPercent(int value);
+    EngineConfig& leftToLeftPercent(int value);
+    EngineConfig& centerToLeftPercent(int value);
+    EngineConfig& rightToLeftPercent(int value);
+    EngineConfig& leftToRightPercent(int value);
+    EngineConfig& centerToRightPercent(int value);
+    EngineConfig& rightToRightPercent(int value);
 
-    // can be expensive, use with care
-    bool operator==(const EngineConfig& other) const;
-
-    // can be expensive, use with care
-    bool operator!=(const EngineConfig& other) const;
+    //bool Equals(const EngineConfig& other) const;
 
     // data
   private:

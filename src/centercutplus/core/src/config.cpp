@@ -7,7 +7,7 @@ namespace core
 
 Config::Config()
     : _isBypassed(true),
-      _engineConfig(new EngineConfig())
+      _engineConfig()
 {
 }
 
@@ -20,12 +20,12 @@ bool Config::isBypassed() const
     return _isBypassed;
 }
 
-const boost::shared_ptr<EngineConfig>& Config::engineConfig() const
+const EngineConfig& Config::engineConfig() const
 {
     return _engineConfig;
 }
 
-boost::shared_ptr<EngineConfig>& Config::engineConfig()
+EngineConfig& Config::engineConfig()
 {
     return _engineConfig;
 }

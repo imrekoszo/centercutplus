@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 
 #include "engineconfig.h"
@@ -20,13 +19,13 @@ class Config : boost::noncopyable
     // methods
   public:
     bool isBypassed() const;
-    const boost::shared_ptr<EngineConfig>& engineConfig() const;
-    boost::shared_ptr<EngineConfig>& engineConfig();
+    const EngineConfig& engineConfig() const;
+    EngineConfig& engineConfig();
 
     // data
   private:
     bool _isBypassed;
-    boost::shared_ptr<EngineConfig> _engineConfig;
+    EngineConfig _engineConfig;
 };
 
 }

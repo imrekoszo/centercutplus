@@ -34,8 +34,8 @@ class FrequencyInterval : boost::noncopyable
 
     bool IsInInterval(uint value);
 
-    bool operator== (const FrequencyInterval& other) const;
-    bool operator!= (const FrequencyInterval& other) const;
+   /* bool operator== (const FrequencyInterval& other) const;
+    bool operator!= (const FrequencyInterval& other) const;*/
 
     // data
   private:

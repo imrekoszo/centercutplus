@@ -18,30 +18,18 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\centercutplus\core\centerdetectionmode.h">
+    <ClInclude Include="inc\centercutplus\configuration\iconfigview.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\centercutplus\core\config.h">
+    <ClInclude Include="inc\centercutplus\configuration\iconfigviewmodel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\centercutplus\core\engineconfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\centercutplus\core\frequencyinterval.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\centercutplus\core\types.h">
+    <ClInclude Include="src\configmodel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\frequencyinterval.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\engineconfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\config.cpp">
+    <ClCompile Include="src\configmodel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

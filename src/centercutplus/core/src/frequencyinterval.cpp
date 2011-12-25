@@ -65,15 +65,15 @@ bool FrequencyInterval::IsInInterval(uint value)
     return value >= _min && value <= _max;
 }
 
-bool FrequencyInterval::operator== (const FrequencyInterval& other) const
-{
-    return _min == other._min && _max == other._max;
-}
-
-bool FrequencyInterval::operator!= (const FrequencyInterval& other) const
-{
-    return !operator== (other);
-}
+//bool FrequencyInterval::operator== (const FrequencyInterval& other) const
+//{
+//    return _min == other._min && _max == other._max;
+//}
+//
+//bool FrequencyInterval::operator!= (const FrequencyInterval& other) const
+//{
+//    return !operator== (other);
+//}
 
 }
 }

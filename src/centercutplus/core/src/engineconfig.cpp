@@ -1,3 +1,4 @@
+#include <boost/foreach.hpp>
 #include "../inc/centercutplus/core/engineconfig.h"
 
 namespace ccp
@@ -48,7 +49,7 @@ CenterDetectionMode EngineConfig::centerDetectionMode() const
     return _centerDetectionMode;
 }
 
-const EngineConfig::FrequencyIntervalVector& EngineConfig::centerToSidesFrequencyIntervals() const
+const FrequencyIntervalVector& EngineConfig::centerToSidesFrequencyIntervals() const
 {
     return _centerToSidesFrequencyIntervals;
 }
@@ -83,97 +84,97 @@ int EngineConfig::rightToRightPercent() const
     return _rightToRightPercent;
 }
 
-void EngineConfig::centerDetectionMode(CenterDetectionMode value)
+EngineConfig& EngineConfig::centerDetectionMode(CenterDetectionMode value)
 {
     _centerDetectionMode = SanitizeCenterDetectionModeValue(value);
+    return *this;
 }
 
-EngineConfig::FrequencyIntervalVector& EngineConfig::centerToSidesFrequencyIntervals()
+FrequencyIntervalVector& EngineConfig::centerToSidesFrequencyIntervals()
 {
     return _centerToSidesFrequencyIntervals;
 }
 
-void EngineConfig::leftToLeftPercent(int value)
+EngineConfig& EngineConfig::leftToLeftPercent(int value)
 {
     _leftToLeftPercent = SanitizePercentValue(value);
+    return *this;
 }
 
-void EngineConfig::centerToLeftPercent(int value)
+EngineConfig& EngineConfig::centerToLeftPercent(int value)
 {
     _centerToLeftPercent = SanitizePercentValue(value);
+    return *this;
 }
 
-void EngineConfig::rightToLeftPercent(int value)
+EngineConfig& EngineConfig::rightToLeftPercent(int value)
 {
     _rightToLeftPercent = SanitizePercentValue(value);
+    return *this;
 }
 
-void EngineConfig::leftToRightPercent(int value)
+EngineConfig& EngineConfig::leftToRightPercent(int value)
 {
     _leftToRightPercent = SanitizePercentValue(value);
+    return *this;
 }
 
-void EngineConfig::centerToRightPercent(int value)
+EngineConfig& EngineConfig::centerToRightPercent(int value)
 {
     _centerToRightPercent = SanitizePercentValue(value);
+    return *this;
 }
 
-void EngineConfig::rightToRightPercent(int value)
+EngineConfig& EngineConfig::rightToRightPercent(int value)
 {
     _rightToRightPercent = SanitizePercentValue(value);
+    return *this;
 }
 
-bool EngineConfig::operator==(const EngineConfig& other) const
-{
-    if(this == &other)
-    {
-        return true;
-    }
-
-    if(_centerDetectionMode != other._centerDetectionMode ||
-        _leftToLeftPercent != other._leftToLeftPercent ||
-        _centerToLeftPercent != other._centerToLeftPercent ||
-        _rightToLeftPercent != other._rightToLeftPercent ||
-        _leftToRightPercent != other._leftToRightPercent ||
-        _centerToRightPercent != other._centerToRightPercent ||
-        _rightToRightPercent != other._rightToRightPercent)
-    {
-        return false;
-    }
-
-    if(_centerToSidesFrequencyIntervals.size() != other._centerToSidesFrequencyIntervals.size())
-    {
-        return false;
-    }
-
-    for(auto iterator = _centerToSidesFrequencyIntervals.begin();
-        iterator < _centerToSidesFrequencyIntervals.end();
-        ++iterator)
-    {
-        auto otherIterator = other._centerToSidesFrequencyIntervals.begin();
-        for(;
-            otherIterator < other._centerToSidesFrequencyIntervals.end();
-            ++otherIterator)
-        {
-            if(*iterator == *otherIterator)
-            {
-                break;
-            }
-        }
-
-        if(otherIterator >= other._centerToSidesFrequencyIntervals.end())
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool EngineConfig::operator!=(const EngineConfig& other) const
-{
-    return !operator==(other);
-}
+//bool EngineConfig::Equals(const EngineConfig& other) const
+//{
+//    if(this == &other)
+//    {
+//        return true;
+//    }
+//
+//    if(_centerDetectionMode != other._centerDetectionMode ||
+//        _leftToLeftPercent != other._leftToLeftPercent ||
+//        _centerToLeftPercent != other._centerToLeftPercent ||
+//        _rightToLeftPercent != other._rightToLeftPercent ||
+//        _leftToRightPercent != other._leftToRightPercent ||
+//        _centerToRightPercent != other._centerToRightPercent ||
+//        _rightToRightPercent != other._rightToRightPercent)
+//    {
+//        return false;
+//    }
+//
+//    if(_centerToSidesFrequencyIntervals.size() != other._centerToSidesFrequencyIntervals.size())
+//    {
+//        return false;
+//    }
+//
+//    BOOST_FOREACH(const FrequencyInterval& own, _centerToSidesFrequencyIntervals)
+//    {
+//        bool found = false;
+//
+//        BOOST_FOREACH(const FrequencyInterval& others, other._centerToSidesFrequencyIntervals)
+//        {
+//            if(own == others)
+//            {
+//                found = true;
+//                break;
+//            }
+//        }
+//
+//        if(!found)
+//        {
+//            return false;
+//        }
+//    }
+//
+//    return true;
+//}
 
 }
 }
