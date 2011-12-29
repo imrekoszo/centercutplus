@@ -1,5 +1,3 @@
-#include <cstdlib>
-
 #include <centercutplus/common/types.h>
 #include <centercutplus/core/engineconfig.h>
 

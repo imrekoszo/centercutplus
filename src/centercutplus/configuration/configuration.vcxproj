@@ -74,6 +74,7 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\centercutplus\configuration\configcontroller.h" />
     <ClInclude Include="inc\centercutplus\configuration\iconfigview.h" />
     <ClInclude Include="inc\centercutplus\configuration\iconfigviewmodel.h" />
     <ClInclude Include="src\configmodel.h" />
@@ -84,6 +85,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\configcontroller.cpp" />
     <ClCompile Include="src\configmodel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

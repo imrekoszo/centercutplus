@@ -15,9 +15,14 @@ Config::~Config()
 {
 }
 
-bool Config::isBypassed() const
+bool Config::IsBypassed() const
 {
     return _isBypassed;
+}
+
+void Config::Bypass(bool bypass)
+{
+    _isBypassed = bypass;
 }
 
 const EngineConfig& Config::engineConfig() const

@@ -21,8 +21,8 @@ class IConfigViewModel
     virtual const core::EngineConfig& GetCurrentEngineConfig() const = 0;
     // TODO: presets
 
-    virtual void Subscribe(const IConfigView& view) const = 0;
-    virtual void Unsubscribe(const IConfigView& view) const = 0;
+    virtual void Subscribe(IConfigView& view) = 0;
+    virtual void Unsubscribe(IConfigView& view) = 0;
 };
 
 }

@@ -18,7 +18,8 @@ class Config : boost::noncopyable
 
     // methods
   public:
-    bool isBypassed() const;
+    bool IsBypassed() const;
+    void Bypass(bool bypass);
     const EngineConfig& engineConfig() const;
     EngineConfig& engineConfig();
 

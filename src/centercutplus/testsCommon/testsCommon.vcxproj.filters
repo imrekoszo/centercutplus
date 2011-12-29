@@ -18,24 +18,12 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\centercutplus\configuration\iconfigview.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\centercutplus\configuration\iconfigviewmodel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\configmodel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\centercutplus\configuration\configcontroller.h">
+    <ClInclude Include="inc\tests\random.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\configmodel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\configcontroller.cpp">
+    <ClCompile Include="src\random.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

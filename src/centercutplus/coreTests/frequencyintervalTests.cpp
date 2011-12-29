@@ -1,10 +1,9 @@
-#include <cstdlib>
-
 #include <centercutplus/common/types.h>
 #include <centercutplus/core/frequencyinterval.h>
 
 #define NOMINMAX
 #include <WinUnit.h>
+#include <tests/random.h>
 
 using ccp::uint;
 using ccp::core::FrequencyInterval;
@@ -13,18 +12,6 @@ namespace
 {
 
 FrequencyInterval sut;
-
-bool InitRandom()
-{
-    srand(time(NULL));
-    return true;
-}
-
-uint GetRandom(uint min, uint max)
-{
-    static bool initRandom = InitRandom();
-    return static_cast<uint>(rand() % static_cast<int>(max - min));
-}
 
 void ResetSut()
 {
@@ -64,7 +51,7 @@ BEGIN_TEST(Should_sanitize_max_against_min)
 {
     // arrange
     ResetSut();
-    uint min = GetRandom(FrequencyInterval::kMinFrequency, FrequencyInterval::kMaxFrequency);
+    uint min = Random::Frequency();
     sut.min(min);
 
     // act
@@ -79,7 +66,7 @@ BEGIN_TEST(Should_sanitize_min_against_max)
 {
     // arrange
     ResetSut();
-    uint max = GetRandom(FrequencyInterval::kMinFrequency, FrequencyInterval::kMaxFrequency);
+    uint max = Random::Frequency();
     sut.max(max);
 
     // act
@@ -94,11 +81,11 @@ BEGIN_TEST(IsInInterval_should_give_correct_result)
 {
     // arrange
     ResetSut();
-    uint max = GetRandom(
+    uint max = Random::Uint(
         FrequencyInterval::kMinFrequency + 1u +
             (FrequencyInterval::kMaxFrequency - FrequencyInterval::kMinFrequency + 1u) / 2u,
         FrequencyInterval::kMaxFrequency);
-    uint min = GetRandom(FrequencyInterval::kMinFrequency + 1u, max);
+    uint min = Random::Uint(FrequencyInterval::kMinFrequency + 1u, max);
     uint tooBig = max + 1u;
     uint tooSmall = min - 1u;
     uint good = min + (max - min) / 2u;
