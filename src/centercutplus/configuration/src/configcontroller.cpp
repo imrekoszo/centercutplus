@@ -1,5 +1,7 @@
 #include "../inc/centercutplus/configuration/configcontroller.h"
 
+#include <centercutplus/core/centerdetectionmode.h>
+
 #include "configmodel.h"
 
 namespace ccp
@@ -28,9 +30,9 @@ ConfigController::~ConfigController()
 {
 }
 
-const IConfigViewModel& ConfigController::Model() const
+IConfigViewModel* ConfigController::Model()
 {
-    return _impl->_model;
+    return &(_impl->_model);
 }
 
 void ConfigController::SetBypassed(bool bypass, const void* origin)

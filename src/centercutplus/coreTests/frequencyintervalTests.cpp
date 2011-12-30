@@ -15,8 +15,8 @@ FrequencyInterval sut;
 
 void ResetSut()
 {
-    sut.min(FrequencyInterval::kMinFrequency);
-    sut.max(FrequencyInterval::kMaxFrequency);
+    sut.minimum(FrequencyInterval::kMinFrequency);
+    sut.maximum(FrequencyInterval::kMaxFrequency);
 }
 
 }
@@ -27,10 +27,10 @@ BEGIN_TEST(Should_sanitize_max_against_max_frequency)
     ResetSut();
 
     // act
-    sut.max(FrequencyInterval::kMaxFrequency + 1u);
+    sut.maximum(FrequencyInterval::kMaxFrequency + 1u);
 
     // assert
-    WIN_ASSERT_EQUAL(FrequencyInterval::kMaxFrequency, sut.max());
+    WIN_ASSERT_EQUAL(FrequencyInterval::kMaxFrequency, sut.maximum());
 }
 END_TEST
 
@@ -40,10 +40,10 @@ BEGIN_TEST(Should_sanitize_min_against_min_frequency)
     ResetSut();
 
     // act
-    sut.min(FrequencyInterval::kMinFrequency - 1u);
+    sut.minimum(FrequencyInterval::kMinFrequency - 1u);
 
     // assert
-    WIN_ASSERT_EQUAL(FrequencyInterval::kMinFrequency, sut.min());
+    WIN_ASSERT_EQUAL(FrequencyInterval::kMinFrequency, sut.minimum());
 }
 END_TEST
 
@@ -52,13 +52,13 @@ BEGIN_TEST(Should_sanitize_max_against_min)
     // arrange
     ResetSut();
     uint min = Random::Frequency();
-    sut.min(min);
+    sut.minimum(min);
 
     // act
-    sut.max(min - 1u);
+    sut.maximum(min - 1u);
 
     // assert
-    WIN_ASSERT_EQUAL(min, sut.max());
+    WIN_ASSERT_EQUAL(min, sut.maximum());
 }
 END_TEST
 
@@ -67,13 +67,13 @@ BEGIN_TEST(Should_sanitize_min_against_max)
     // arrange
     ResetSut();
     uint max = Random::Frequency();
-    sut.max(max);
+    sut.maximum(max);
 
     // act
-    sut.min(max + 1u);
+    sut.minimum(max + 1u);
 
     // assert
-    WIN_ASSERT_EQUAL(max, sut.min());
+    WIN_ASSERT_EQUAL(max, sut.minimum());
 }
 END_TEST
 
@@ -90,8 +90,8 @@ BEGIN_TEST(IsInInterval_should_give_correct_result)
     uint tooSmall = min - 1u;
     uint good = min + (max - min) / 2u;
 
-    sut.min(min);
-    sut.max(max);
+    sut.minimum(min);
+    sut.maximum(max);
 
     // assert
     WIN_ASSERT_TRUE(sut.IsInInterval(max));

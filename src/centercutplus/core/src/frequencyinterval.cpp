@@ -18,17 +18,17 @@ FrequencyInterval::~FrequencyInterval()
 {
 }
 
-uint FrequencyInterval::min() const
+uint FrequencyInterval::minimum() const
 {
     return _min;
 }
 
-uint FrequencyInterval::max() const
+uint FrequencyInterval::maximum() const
 {
     return _max;
 }
 
-void FrequencyInterval::min(uint value)
+void FrequencyInterval::minimum(uint value)
 {
     if(value < kMinFrequency)
     {
@@ -44,7 +44,7 @@ void FrequencyInterval::min(uint value)
     }
 }
 
-void FrequencyInterval::max(uint value)
+void FrequencyInterval::maximum(uint value)
 {
     if(value > kMaxFrequency)
     {

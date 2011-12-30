@@ -5,14 +5,13 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 
-#include <centercutplus/core/centerdetectionmode.h>
-
 namespace ccp
 {
 
 namespace core
 {
 class Config;
+enum CenterDetectionMode;
 }
 
 namespace configuration
@@ -32,7 +31,7 @@ class ConfigController : boost::noncopyable
 
     // methods
   public:
-    const IConfigViewModel& Model() const;
+    IConfigViewModel* Model();
     void SetBypassed(bool bypass, const void* origin = NULL);
     void SetCenterDetectionMode(core::CenterDetectionMode value, const void* origin = NULL);
     void SetLeftToLeftPercent(int value, const void* origin = NULL);

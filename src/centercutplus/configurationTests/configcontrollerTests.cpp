@@ -22,7 +22,7 @@ void Setup()
     sut.reset();
     config.reset(new ccp::core::Config());
     sut.reset(new ConfigController(*config));
-    model = &(sut->Model());
+    model = sut->Model();
 }
 
 }

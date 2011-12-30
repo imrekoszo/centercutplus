@@ -26,11 +26,11 @@ class FrequencyInterval : boost::noncopyable
 
     // methods
   public:
-    uint min() const;
-    uint max() const;
+    uint minimum() const;
+    uint maximum() const;
 
-    void min(uint value);
-    void max(uint value);
+    void minimum(uint value);
+    void maximum(uint value);
 
     bool IsInInterval(uint value);
 

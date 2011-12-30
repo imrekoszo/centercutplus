@@ -12,6 +12,7 @@ class View : public ccp::configuration::IConfigView, boost::noncopyable
     // methods
   public:
     void Update(const void* origin) { Updated = true; Origin = origin; }
+    void SetController(ccp::configuration::ConfigController& controller) { }
 
     // data
   public:
