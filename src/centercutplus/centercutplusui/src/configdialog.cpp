@@ -8,10 +8,12 @@
 
 #include "resource.h"
 
+#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
+
+namespace ccp
+{
 namespace
 {
-using ccp::uint;
-
 template<typename T>
 void SetSliderPos(HWND hDlg, UINT sliderId, T position)
 {
@@ -72,8 +74,6 @@ void InitSlider(HWND hDlg, UINT sliderId, T max)
 //}
 }
 
-namespace ccp
-{
 namespace ui
 {
 
@@ -96,15 +96,10 @@ INT_PTR ConfigDialog::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
     switch(message)
     {
         case WM_INITDIALOG:
-            {
-                InitSlider<int>(HDlg(), IDC_SLIDER1, core::EngineConfig::kMaxPercent - core::EngineConfig::kMinPercent);
-                TryInitControls();
-            }
+            OnInitDialog();
             break;
         case WM_VSCROLL:
-            {
-                _controller->SetLeftToLeftPercent(GetSliderPos<int>(HDlg(), IDC_SLIDER1) + core::EngineConfig::kMinPercent, this);
-            }
+            OnVScroll(lParam);
             break;
         case WM_DESTROY:
             TryUnsubscribe();
@@ -112,14 +107,6 @@ INT_PTR ConfigDialog::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
     }
 
     return baseResult;
-}
-
-void ConfigDialog::Update(const void* origin)
-{
-    if(origin != this)
-    {
-        SetSliderPos<int>(HDlg(), IDC_SLIDER1, _model->GetCurrentEngineConfig().leftToLeftPercent() - core::EngineConfig::kMinPercent);
-    }
 }
 
 void ConfigDialog::SetController(configuration::ConfigController& controller)
@@ -130,6 +117,34 @@ void ConfigDialog::SetController(configuration::ConfigController& controller)
     TryInitControls();
 }
 
+void ConfigDialog::OnInitDialog()
+{
+    InitOutputSlider(IDC_LL);
+    InitOutputSlider(IDC_CL);
+    InitOutputSlider(IDC_RL);
+    TryInitControls();
+}
+
+void ConfigDialog::OnVScroll(LPARAM lParam)
+{
+    if(IsOutputSliderId(::GetDlgCtrlID(reinterpret_cast<HWND>(lParam))))
+    {
+        ReadOutputSlider(IDC_LL);
+        ReadOutputSlider(IDC_CL);
+        ReadOutputSlider(IDC_RL);
+    }
+}
+
+void ConfigDialog::Update(const void* origin)
+{
+    if(origin != this)
+    {
+        UpdateOutputSlider(IDC_LL);
+        UpdateOutputSlider(IDC_CL);
+        UpdateOutputSlider(IDC_RL);
+    }
+}
+
 void ConfigDialog::TryInitControls()
 {
     if(!_model || !::IsWindow(HDlg()))
@@ -137,7 +152,9 @@ void ConfigDialog::TryInitControls()
         return;
     }
 
-    SetSliderPos<int>(HDlg(), IDC_SLIDER1, _model->GetCurrentEngineConfig().leftToLeftPercent() - core::EngineConfig::kMinPercent);
+    UpdateOutputSlider(IDC_LL);
+    UpdateOutputSlider(IDC_CL);
+    UpdateOutputSlider(IDC_RL);
 }
 
 void ConfigDialog::TryUnsubscribe()
@@ -146,6 +163,60 @@ void ConfigDialog::TryUnsubscribe()
     {
         _model->Unsubscribe(*this);
     }
+}
+
+void ConfigDialog::InitOutputSlider(UINT sliderId)
+{
+    InitSlider<int>(HDlg(), sliderId, core::EngineConfig::kMaxPercent - core::EngineConfig::kMinPercent);
+}
+
+void ConfigDialog::UpdateOutputSlider(UINT sliderId)
+{
+    int percentValue = CALL_MEMBER_FN(_model->GetCurrentEngineConfig(), GetOutputSliderMetadata(sliderId).getter)();
+    SetSliderPos<int>(HDlg(), sliderId, percentValue - core::EngineConfig::kMinPercent);
+}
+
+void ConfigDialog::ReadOutputSlider(UINT sliderId)
+{
+    int sliderValue = GetSliderPos<int>(HDlg(), sliderId);
+    CALL_MEMBER_FN(*_controller, GetOutputSliderMetadata(sliderId).setter)(sliderValue + core::EngineConfig::kMinPercent, this);
+}
+
+ConfigDialog::OutputSliderMetadata& ConfigDialog::GetOutputSliderMetadata(UINT sliderId)
+{
+    static boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& metadata = InitOutputSliderMetadata();
+    return metadata[sliderId];
+}
+
+boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& ConfigDialog::InitOutputSliderMetadata()
+{
+    static boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata> metadata;
+
+    UINT key = IDC_LL;
+    metadata.insert(key,
+                    new ConfigDialog::OutputSliderMetadata(&core::EngineConfig::leftToLeftPercent,
+                                                           &configuration::ConfigController::SetLeftToLeftPercent,
+                                                           IDC_LLL));
+
+    key = IDC_RL;
+    metadata.insert(key,
+                    new ConfigDialog::OutputSliderMetadata(&core::EngineConfig::rightToLeftPercent,
+                                                           &configuration::ConfigController::SetRightToLeftPercent,
+                                                           IDC_RLL));
+
+    key = IDC_CL;
+    metadata.insert(key,
+                    new ConfigDialog::OutputSliderMetadata(&core::EngineConfig::centerToLeftPercent,
+                                                           &configuration::ConfigController::SetCenterToLeftPercent,
+                                                           IDC_CLL));
+
+    return metadata;
+}
+
+bool ConfigDialog::IsOutputSliderId(UINT id)
+{
+    static boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& metadata = InitOutputSliderMetadata();
+    return metadata.find(id) != metadata.end();
 }
 
 }
