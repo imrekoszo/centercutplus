@@ -16,14 +16,18 @@ int _tmain(int argc, _TCHAR* argv[])
     ccp::wrapper::CenterCutWrapper wrapper;
     ccp::ui::ConfigDialog dialog1;
     ccp::ui::ConfigDialog dialog2;
+    ccp::ui::ConfigDialog dialog3;
 
     dialog1.Create(NULL, NULL);
     wrapper.AddView(dialog1);
     wrapper.AddView(dialog2);
+    wrapper.AddView(dialog3);
+    dialog3.Create(NULL, NULL);
 
     dialog2.DoModal(NULL, NULL);
 
     dialog1.Destroy();
+    dialog3.Destroy();
 
 
 	return 0;
