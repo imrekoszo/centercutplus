@@ -2,6 +2,7 @@
 
 #include <boost/ptr_container/ptr_map.hpp>
 
+#include <centercutplus/common/types.h>
 #include <centercutplus/configuration/iconfigview.h>
 #include "dll.h"
 #include "dialog.h"
@@ -54,12 +55,19 @@ class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IC
   private:
     void OnInitDialog();
     void OnVScroll(LPARAM lParam);
+    void OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam);
+    bool IsBackendReady();
     void TryInitControls();
     void TryUnsubscribe();
-    void InitOutputSlider(UINT sliderId);
-    void UpdateOutputSlider(UINT sliderId);
-    void ReadOutputSlider(UINT sliderId);
-    static OutputSliderMetadata& GetOutputSliderMetadata(UINT sliderId);
+    void InitOutputSliders();
+    void UpdateOutputSliders();
+    void SaveOutputSliderPercentValue(UINT sliderId);
+    int GetOutputSliderPercentValue(UINT sliderId);
+    void UpdateLabels();
+    void UpdateLabel(UINT id, const tstring& newValue);
+    void UpdateBypass();
+    void SaveBypass();
+    static boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& GetOutputSliderMetadata();
     static boost::ptr_map<UINT, OutputSliderMetadata>& InitOutputSliderMetadata();
     static bool IsOutputSliderId(UINT id);
 

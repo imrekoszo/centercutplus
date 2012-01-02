@@ -27,6 +27,7 @@ class CENTERCUTPLUSUI_API Dialog
     HWND HDlg() const { return _hDlg; }
     HWND HParentWnd() const { return _hParentWnd; }
     HINSTANCE HInstance() const { return _hInstance; }
+    bool IsWindow() const { return ::IsWindow(HDlg()) == TRUE; }
 
   protected:
     virtual INT_PTR WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
