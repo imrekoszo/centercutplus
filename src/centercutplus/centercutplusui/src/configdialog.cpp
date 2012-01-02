@@ -19,17 +19,17 @@ namespace
 template<typename T>
 void SetVerticalSliderValue(HWND hDlg, UINT sliderId, T value)
 {
-    T max = static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMAX, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
-    T min = static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMIN, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
+    T max = GetSliderMax<T>(hDlg, sliderId);
+    T min = GetSliderMin<T>(hDlg, sliderId);
     ::SendDlgItemMessage(hDlg, sliderId, TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(min + max - value));
 }
 
 template<typename T>
 T GetVerticalSliderValue(HWND hDlg, UINT sliderId)
 {
-    T max = static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMAX, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
-    T min = static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMIN, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
-    T pos = static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETPOS, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
+    T max = GetSliderMax<T>(hDlg, sliderId);
+    T min = GetSliderMin<T>(hDlg, sliderId);
+    T pos = GetSliderPos<T>(hDlg, sliderId);
     return min + max - pos;
 }
 
@@ -39,11 +39,23 @@ void SetSliderRange(HWND hDlg, UINT sliderId, T min, T max)
     ::SendDlgItemMessage(hDlg, sliderId, TBM_SETRANGE, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(MAKELONG(min, max)));
 }
 
-//template<typename T>
-//T GetSlidermaximum(HWND hDlg, UINT sliderId)
-//{
-//    return static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMAX, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
-//}
+template<typename T>
+T GetSliderMax(HWND hDlg, UINT sliderId)
+{
+    return static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMAX, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
+}
+
+template<typename T>
+T GetSliderMin(HWND hDlg, UINT sliderId)
+{
+    return static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETRANGEMIN, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
+}
+
+template<typename T>
+T GetSliderPos(HWND hDlg, UINT sliderId)
+{
+    return static_cast<T>(::SendDlgItemMessage(hDlg, sliderId, TBM_GETPOS, static_cast<WPARAM>(0), static_cast<LPARAM>(0)));
+}
 
 template<typename T>
 void InitVerticalSlider(HWND hDlg, UINT sliderId, T min, T max)
@@ -125,13 +137,13 @@ void ConfigDialog::SetController(configuration::ConfigController& controller)
     _controller = &controller;
     _model = _controller->Model();
     _model->Subscribe(*this);
-    TryInitControls();
+    TryInitControlsWithValues();
 }
 
 void ConfigDialog::OnInitDialog()
 {
     InitOutputSliders();
-    TryInitControls();
+    TryInitControlsWithValues();
 }
 
 void ConfigDialog::OnVScroll(LPARAM lParam)
@@ -149,10 +161,24 @@ void ConfigDialog::OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam)
     switch(wParamHi)
     {
         case BN_CLICKED:
-            if(wParamLo == IDC_BYPASS)
-            {
-                SaveBypass();
-            }
+            OnButtonClicked(static_cast<UINT>(wParamLo), reinterpret_cast<HWND>(lParam));
+            break;
+    }
+}
+
+void ConfigDialog::OnButtonClicked(UINT buttonId, HWND buttonHandle)
+{
+    switch(buttonId)
+    {
+        case IDC_BYPASS:
+            SaveBypass();
+            break;
+        case IDC_INPHASE:
+        case IDC_INVLEFT:
+        case IDC_INVRIGHT:
+        case IDC_BOTHLEFT:
+        case IDC_BOTHRIGHT:
+            SaveCenterDetectionMode();
             break;
     }
 }
@@ -164,6 +190,7 @@ void ConfigDialog::Update(const void* origin)
         UpdateBypass();
         UpdateOutputSliders();
         UpdateLabels();
+        UpdateCenterDetectionMode();
     }
 }
 
@@ -172,13 +199,14 @@ bool ConfigDialog::IsBackendReady()
     return _controller != NULL && _model != NULL;
 }
 
-void ConfigDialog::TryInitControls()
+void ConfigDialog::TryInitControlsWithValues()
 {
     if(IsWindow() && IsBackendReady())
     {
         UpdateBypass();
         UpdateOutputSliders();
         UpdateLabels();
+        UpdateCenterDetectionMode();
     }
 }
 
@@ -215,7 +243,10 @@ void ConfigDialog::UpdateOutputSliders()
 
 void ConfigDialog::SaveOutputSliderPercentValue(UINT sliderId)
 {
-    CALL_MEMBER_FN(*_controller, GetOutputSliderMetadata()[sliderId].setter)(GetOutputSliderPercentValue(sliderId), this);
+    if(IsBackendReady())
+    {
+        CALL_MEMBER_FN(*_controller, GetOutputSliderMetadata()[sliderId].setter)(GetOutputSliderPercentValue(sliderId), this);
+    }
 }
 
 int ConfigDialog::GetOutputSliderPercentValue(UINT sliderId)
@@ -260,7 +291,75 @@ void ConfigDialog::UpdateBypass()
 
 void ConfigDialog::SaveBypass()
 {
-    _controller->SetBypassed(GetCheck(HDlg(), IDC_BYPASS), this);
+    if(IsBackendReady())
+    {
+        _controller->SetBypassed(GetCheck(HDlg(), IDC_BYPASS), this);
+    }
+}
+
+void ConfigDialog::UpdateCenterDetectionMode()
+{
+    core::CenterDetectionMode newValue = _model->GetCurrentEngineConfig().centerDetectionMode();
+    core::CenterDetectionMode oldValue = GetCenterDetectionMode();
+
+    if(newValue != oldValue)
+    {
+        UINT checkId = IDC_INPHASE;
+        switch(newValue)
+        {
+            case core::kCenterDetectionMode_InPhase:
+                checkId = IDC_INPHASE;
+                break;
+            case core::kCenterDetectionMode_InversePhaseLeft:
+                checkId = IDC_INVLEFT;
+                break;
+            case core::kCenterDetectionMode_InversePhaseRight:
+                checkId = IDC_INVRIGHT;
+                break;
+            case core::kCenterDetectionMode_BothPhaseLeft:
+                checkId = IDC_BOTHLEFT;
+                break;
+            case core::kCenterDetectionMode_BothPhaseRight:
+                checkId = IDC_BOTHRIGHT;
+                break;
+        }
+
+        ::CheckRadioButton(HDlg(), IDC_INPHASE, IDC_BOTHRIGHT, checkId);
+    }
+}
+
+core::CenterDetectionMode ConfigDialog::GetCenterDetectionMode()
+{
+    if(GetCheck(HDlg(), IDC_INPHASE))
+    {
+        return core::kCenterDetectionMode_InPhase;
+    }
+    if(GetCheck(HDlg(), IDC_INVLEFT))
+    {
+        return core::kCenterDetectionMode_InversePhaseLeft;
+    }
+    if(GetCheck(HDlg(), IDC_INVRIGHT))
+    {
+        return core::kCenterDetectionMode_InversePhaseRight;
+    }
+    if(GetCheck(HDlg(), IDC_BOTHLEFT))
+    {
+        return core::kCenterDetectionMode_BothPhaseLeft;
+    }
+    if(GetCheck(HDlg(), IDC_BOTHRIGHT))
+    {
+        return core::kCenterDetectionMode_BothPhaseRight;
+    }
+
+    return static_cast<core::CenterDetectionMode>(core::kCenterDetectionMode_Max + 1);
+}
+
+void ConfigDialog::SaveCenterDetectionMode()
+{
+    if(IsBackendReady())
+    {
+        _controller->SetCenterDetectionMode(GetCenterDetectionMode(), this);
+    }
 }
 
 boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& ConfigDialog::GetOutputSliderMetadata()

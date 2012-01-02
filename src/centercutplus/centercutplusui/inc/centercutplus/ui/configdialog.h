@@ -3,6 +3,7 @@
 #include <boost/ptr_container/ptr_map.hpp>
 
 #include <centercutplus/common/types.h>
+#include <centercutplus/core/centerdetectionmode.h>
 #include <centercutplus/configuration/iconfigview.h>
 #include "dll.h"
 #include "dialog.h"
@@ -56,8 +57,9 @@ class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IC
     void OnInitDialog();
     void OnVScroll(LPARAM lParam);
     void OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam);
+    void OnButtonClicked(UINT buttonId, HWND buttonHandle);
     bool IsBackendReady();
-    void TryInitControls();
+    void TryInitControlsWithValues();
     void TryUnsubscribe();
     void InitOutputSliders();
     void UpdateOutputSliders();
@@ -67,6 +69,9 @@ class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IC
     void UpdateLabel(UINT id, const tstring& newValue);
     void UpdateBypass();
     void SaveBypass();
+    void UpdateCenterDetectionMode();
+    core::CenterDetectionMode GetCenterDetectionMode();
+    void SaveCenterDetectionMode();
     static boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& GetOutputSliderMetadata();
     static boost::ptr_map<UINT, OutputSliderMetadata>& InitOutputSliderMetadata();
     static bool IsOutputSliderId(UINT id);
