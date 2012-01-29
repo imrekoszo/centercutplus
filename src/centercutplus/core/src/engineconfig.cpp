@@ -36,7 +36,8 @@ EngineConfig::EngineConfig()
       _centerToRightPercent(0),
       _rightToRightPercent(0),
       _centerDetectionMode(kCenterDetectionMode_InPhase),
-      _centerToSidesFrequencyIntervals()
+      _centerToSidesFrequencyIntervals(),
+      _focusPositionPercent(0)
 {
 }
 
@@ -84,6 +85,11 @@ int EngineConfig::rightToRightPercent() const
     return _rightToRightPercent;
 }
 
+int EngineConfig::focusPositionPercent() const
+{
+    return _focusPositionPercent;
+}
+
 EngineConfig& EngineConfig::centerDetectionMode(CenterDetectionMode value)
 {
     _centerDetectionMode = SanitizeCenterDetectionModeValue(value);
@@ -128,6 +134,12 @@ EngineConfig& EngineConfig::centerToRightPercent(int value)
 EngineConfig& EngineConfig::rightToRightPercent(int value)
 {
     _rightToRightPercent = SanitizePercentValue(value);
+    return *this;
+}
+
+EngineConfig& EngineConfig::focusPositionPercent(int value)
+{
+    _focusPositionPercent = SanitizePercentValue(value);
     return *this;
 }
 

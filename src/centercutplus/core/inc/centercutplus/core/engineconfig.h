@@ -39,6 +39,7 @@ class EngineConfig : boost::noncopyable
     int leftToRightPercent() const;
     int centerToRightPercent() const;
     int rightToRightPercent() const;
+    int focusPositionPercent() const;
 
     EngineConfig& centerDetectionMode(CenterDetectionMode value);
     FrequencyIntervalVector& centerToSidesFrequencyIntervals();
@@ -48,6 +49,7 @@ class EngineConfig : boost::noncopyable
     EngineConfig& leftToRightPercent(int value);
     EngineConfig& centerToRightPercent(int value);
     EngineConfig& rightToRightPercent(int value);
+    EngineConfig& focusPositionPercent(int value);
 
     //bool Equals(const EngineConfig& other) const;
 
@@ -61,6 +63,7 @@ class EngineConfig : boost::noncopyable
     int _leftToRightPercent;
     int _centerToRightPercent;
     int _rightToRightPercent;
+    int _focusPositionPercent;
 };
 
 }

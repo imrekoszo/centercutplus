@@ -273,3 +273,20 @@ BEGIN_TEST(SetFreqMaxTest)
     WIN_ASSERT_EQUAL(view.get(), view->Origin);
 }
 END_TEST
+
+BEGIN_TEST(SetFocusPositionPercentTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().focusPositionPercent(Random::Percent());
+    auto value = Random::Percent();
+
+    // act
+    sut->SetFocusPositionPercent(value, view.get());
+
+    // assert
+    WIN_ASSERT_EQUAL(value, config->engineConfig().focusPositionPercent());
+    WIN_ASSERT_TRUE(view->Updated);
+    WIN_ASSERT_EQUAL(view.get(), view->Origin);
+}
+END_TEST

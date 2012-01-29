@@ -48,6 +48,7 @@ class ConfigModel : public IConfigViewModel
     void RemoveFreqInterval(size_t index, const void* origin);
     void SetFreqMin(size_t index, uint value, const void* origin);
     void SetFreqMax(size_t index, uint value, const void* origin);
+    void SetFocusPositionPercent(int value, const void* origin);
 
   private:
     void UpdateViews(const void* origin);

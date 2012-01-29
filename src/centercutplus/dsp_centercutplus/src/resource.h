@@ -3,6 +3,7 @@
 #endif
 
 #define IDD_CONFIG                              102
+#define IDC_CFOCUS                              1000
 #define IDC_BYPASS                              1001
 #define IDC_LL                                  1003
 #define IDC_CL                                  1004
@@ -28,4 +29,4 @@
 #define IDC_FREQS                               1031
 #define IDC_ADDFREQ                             1032
 #define IDC_DELFREQ                             1033
-#define IDC_CPOS                                1034
+#define IDC_CFOCUSL                             1035

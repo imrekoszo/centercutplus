@@ -117,10 +117,15 @@ class DSP_CENTERCUTPLUS_API ConfigDialog : public Dialog, public configuration::
     void UpdateFreqIntervalList();
     tstring FormatFreq(uint value);
     tstring FormatFreqInterval(const core::FrequencyInterval& interval);
+    void InitFreqSliders();
     void UpdateFreqSlider(UINT id, const core::FrequencyInterval& interval);
     void AddFreqInterval();
     void DelFreqInterval();
     void SaveFreqSliderValue(size_t freqIntervalIndex, UINT sliderId);
+    void InitFocusSlider();
+    void UpdateFocusSlider();
+    void UpdateFocusLabel();
+    void SaveFocusValue();
 
     // data
   private:

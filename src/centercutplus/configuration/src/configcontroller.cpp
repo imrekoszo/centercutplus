@@ -95,5 +95,10 @@ void ConfigController::SetFreqMax(size_t index, uint value, const void* origin)
     _impl->_model.SetFreqMax(index, value, origin);
 }
 
+void ConfigController::SetFocusPositionPercent(int value, const void* origin)
+{
+    _impl->_model.SetFocusPositionPercent(value, origin);
+}
+
 }
 }

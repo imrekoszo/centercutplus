@@ -127,6 +127,12 @@ void ConfigModel::SetFreqMax(size_t index, uint value, const void* origin)
     }
 }
 
+void ConfigModel::SetFocusPositionPercent(int value, const void* origin)
+{
+    _liveConfig.engineConfig().focusPositionPercent(value);
+    UpdateViews(origin);
+}
+
 void ConfigModel::UpdateViews(const void* origin)
 {
     BOOST_FOREACH(IConfigView* view, _views)

@@ -147,3 +147,90 @@ BEGIN_TEST(Controller_SetRightToRightPercentTest)
     WIN_ASSERT_EQUAL(value, model->GetCurrentEngineConfig().rightToRightPercent());
 }
 END_TEST
+
+BEGIN_TEST(Controller_AddFreqIntervalTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().clear();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    auto pZero = &config->engineConfig().centerToSidesFrequencyIntervals()[0];
+
+    // act
+    sut->AddFreqInterval();
+
+    // assert
+    WIN_ASSERT_EQUAL(2, config->engineConfig().centerToSidesFrequencyIntervals().size());
+    WIN_ASSERT_EQUAL(pZero, &config->engineConfig().centerToSidesFrequencyIntervals()[0]);
+    WIN_ASSERT_NOT_EQUAL(pZero, &config->engineConfig().centerToSidesFrequencyIntervals()[1]);
+}
+END_TEST
+
+BEGIN_TEST(Controller_RemoveFreqIntervalTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().clear();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    auto pOne = &config->engineConfig().centerToSidesFrequencyIntervals()[1];
+
+    // act
+    sut->RemoveFreqInterval(0);
+
+    // assert
+    WIN_ASSERT_EQUAL(1, config->engineConfig().centerToSidesFrequencyIntervals().size());
+    WIN_ASSERT_EQUAL(pOne, &config->engineConfig().centerToSidesFrequencyIntervals()[0]);
+}
+END_TEST
+
+BEGIN_TEST(Controller_SetFreqMinTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().clear();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    ccp::uint newMin = Random::Uint(ccp::core::FrequencyInterval::kMinFrequency,
+                                    config->engineConfig().centerToSidesFrequencyIntervals()[0].maximum());
+
+    // act
+    sut->SetFreqMin(0, newMin);
+
+    // assert
+    WIN_ASSERT_EQUAL(newMin, config->engineConfig().centerToSidesFrequencyIntervals()[0].minimum());
+}
+END_TEST
+
+BEGIN_TEST(Controller_SetFreqMaxTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().clear();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    ccp::uint newMax = Random::Uint(config->engineConfig().centerToSidesFrequencyIntervals()[1].minimum(),
+                                    ccp::core::FrequencyInterval::kMaxFrequency);
+
+    // act
+    sut->SetFreqMax(1, newMax);
+
+    // assert
+    WIN_ASSERT_EQUAL(newMax, config->engineConfig().centerToSidesFrequencyIntervals()[1].maximum());
+}
+END_TEST
+
+BEGIN_TEST(Controller_SetFocusPositionPercentTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().focusPositionPercent(Random::Percent());
+    auto value = Random::Percent();
+
+    // act
+    sut->SetFocusPositionPercent(value);
+
+    // assert
+    WIN_ASSERT_EQUAL(value, model->GetCurrentEngineConfig().focusPositionPercent());
+}
+END_TEST

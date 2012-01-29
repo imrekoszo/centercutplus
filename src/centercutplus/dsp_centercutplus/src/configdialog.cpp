@@ -147,6 +147,8 @@ INT_PTR ConfigDialog::DlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 BOOL ConfigDialog::OnInitDialog()
 {
     InitOutputSliders();
+    InitFreqSliders();
+    InitFocusSlider();
     TryInitControlsWithValues();
     return TRUE; // return FALSE if setting focus ourselves
 }
@@ -171,6 +173,13 @@ BOOL ConfigDialog::OnScroll(HWND hWnd)
             UpdateFreqControls();
             UpdateFreqLabels();
         }
+        return TRUE;
+    }
+    if(id == IDC_CFOCUS)
+    {
+        SaveFocusValue();
+        UpdateFocusSlider();
+        UpdateFocusLabel();
         return TRUE;
     }
 
@@ -257,6 +266,7 @@ void ConfigDialog::Update(const void* origin)
         UpdateOutputSliders();
         UpdateFreqIntervalList();
         UpdateFreqControls();
+        UpdateFocusSlider();
         UpdateLabels();
     }
 }
@@ -275,6 +285,7 @@ void ConfigDialog::TryInitControlsWithValues()
         UpdateCenterDetectionMode();
         UpdateFreqIntervalList();
         UpdateFreqControls();
+        UpdateFocusSlider();
         UpdateLabels();
     }
 }
@@ -341,6 +352,7 @@ void ConfigDialog::UpdateLabels()
 {
     UpdateOutputLabels();
     UpdateFreqLabels();
+    UpdateFocusLabel();
 }
 
 void ConfigDialog::UpdateLabel(UINT id, const tstring& newValue)
@@ -646,12 +658,29 @@ tstring ConfigDialog::FormatFreqInterval(const core::FrequencyInterval& interval
     return buffer.str();
 }
 
+void ConfigDialog::InitFreqSliders()
+{
+    static auto& metadata = GetFreqSliderMetadata();
+    BOOST_FOREACH(auto md, metadata)
+    {
+        ::SendDlgItemMessage(HDlg(), md.first, TBM_SETLINESIZE, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(1));
+    }
+}
+
 void ConfigDialog::UpdateFreqSlider(UINT id, const core::FrequencyInterval& interval)
 {
     static auto& metadata = GetFreqSliderMetadata();
     EnableControl(id, true);
-    SetSliderRange<uint>(HDlg(), id, metadata[id].Minimum(interval), metadata[id].Maximum(interval));
+
+    uint minimum = metadata[id].Minimum(interval);
+    uint maximum = metadata[id].Maximum(interval);
+
+    SetSliderRange<uint>(HDlg(), id, minimum, maximum);
     SetSliderPos<uint>(HDlg(), id, CALL_MEMBER_FN(interval, metadata[id].getter)());
+
+    uint pagesize = static_cast<uint>(static_cast<double>(maximum - minimum) * 0.024 + 17.59);
+    ::SendDlgItemMessage(HDlg(), id, TBM_SETPAGESIZE, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(pagesize));
+    ::SendDlgItemMessage(HDlg(), id, TBM_SETTICFREQ, static_cast<WPARAM>(pagesize), static_cast<LPARAM>(0));
 }
 
 void ConfigDialog::AddFreqInterval()
@@ -695,6 +724,47 @@ void ConfigDialog::SaveFreqSliderValue(size_t freqIntervalIndex, UINT sliderId)
     {
         CALL_MEMBER_FN(*_controller,
             GetFreqSliderMetadata()[sliderId].setter)(freqIntervalIndex, GetSliderPos<uint>(HDlg(), sliderId), this);
+    }
+}
+
+void ConfigDialog::InitFocusSlider()
+{
+    SetSliderRange<int>(HDlg(), IDC_CFOCUS, core::EngineConfig::kMinPercent, core::EngineConfig::kMaxPercent);
+    ::SendDlgItemMessage(HDlg(), IDC_CFOCUS, TBM_SETLINESIZE, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(1));
+    ::SendDlgItemMessage(HDlg(), IDC_CFOCUS, TBM_SETPAGESIZE, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(10));
+    ::SendDlgItemMessage(HDlg(), IDC_CFOCUS, TBM_SETTICFREQ, static_cast<WPARAM>(10), static_cast<LPARAM>(0));
+}
+
+void ConfigDialog::UpdateFocusSlider()
+{
+    SetSliderPos<int>(HDlg(), IDC_CFOCUS, _model->GetCurrentEngineConfig().focusPositionPercent());
+}
+
+void ConfigDialog::UpdateFocusLabel()
+{
+    int value = _model->GetCurrentEngineConfig().focusPositionPercent();
+    tstringstream buffer;
+    if(value > 0)
+    {
+        buffer << value << _T("% Right");
+    }
+    else if(value < 0)
+    {
+        buffer << -value << _T("% Left");
+    }
+    else
+    {
+        buffer << _T("Center");
+    }
+    tstring newValue = buffer.str();
+    UpdateLabel(IDC_CFOCUSL, newValue);
+}
+
+void ConfigDialog::SaveFocusValue()
+{
+    if(IsBackendReady())
+    {
+        _controller->SetFocusPositionPercent(GetSliderPos<int>(HDlg(), IDC_CFOCUS));
     }
 }
 

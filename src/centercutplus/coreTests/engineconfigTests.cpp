@@ -22,6 +22,7 @@ void ResetSut()
         .leftToRightPercent(0)
         .rightToLeftPercent(0)
         .rightToRightPercent(0)
+        .focusPositionPercent(0)
         .centerToSidesFrequencyIntervals().clear();
 }
 
@@ -111,6 +112,20 @@ BEGIN_TEST(Should_sanitize_max_rightToRightPercent)
 }
 END_TEST
 
+BEGIN_TEST(Should_sanitize_max_focusPositionPercent)
+{
+    // arrange
+    ResetSut();
+    int outOfRange = EngineConfig::kMaxPercent + 1;
+
+    // act
+    sut.focusPositionPercent(outOfRange);
+
+    // assert
+    WIN_ASSERT_EQUAL(sut.focusPositionPercent(), EngineConfig::kMaxPercent);
+}
+END_TEST
+
 BEGIN_TEST(Should_sanitize_min_centerToLeftPercent)
 {
     // arrange
@@ -192,6 +207,20 @@ BEGIN_TEST(Should_sanitize_min_rightToRightPercent)
 
     // assert
     WIN_ASSERT_EQUAL(sut.rightToRightPercent(), EngineConfig::kMinPercent);
+}
+END_TEST
+
+BEGIN_TEST(Should_sanitize_min_focusPositionPercent)
+{
+    // arrange
+    ResetSut();
+    int outOfRange = EngineConfig::kMinPercent - 1;
+
+    // act
+    sut.focusPositionPercent(outOfRange);
+
+    // assert
+    WIN_ASSERT_EQUAL(sut.focusPositionPercent(), EngineConfig::kMinPercent);
 }
 END_TEST
 

@@ -46,6 +46,7 @@ class ConfigController : boost::noncopyable
     void RemoveFreqInterval(size_t index, const void* origin = NULL);
     void SetFreqMin(size_t index, uint value, const void* origin = NULL);
     void SetFreqMax(size_t index, uint value, const void* origin = NULL);
+    void SetFocusPositionPercent(int value, const void* origin = NULL);
 
     // data
   private:
