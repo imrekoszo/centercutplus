@@ -1,6 +1,7 @@
 #include "../inc/centercutplus/ui/configdialog.h"
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_array.hpp>
 
 #include <CommCtrl.h>
 #include <centercutplus/common/types.h>
@@ -16,6 +17,9 @@ namespace ccp
 {
 namespace
 {
+LPARAM lZero = static_cast<LPARAM>(0);
+WPARAM wZero = static_cast<WPARAM>(0);
+
 template<typename T>
 void SetVerticalSliderValue(HWND hDlg, UINT sliderId, T value)
 {
@@ -122,8 +126,18 @@ INT_PTR ConfigDialog::DlgProc(UINT message, WPARAM wParam, LPARAM lParam)
     switch(message)
     {
         case WM_INITDIALOG: return static_cast<INT_PTR>(OnInitDialog());
-        case WM_VSCROLL:    return static_cast<INT_PTR>(OnVScroll(lParam));
-        case WM_COMMAND:    return static_cast<INT_PTR>(OnCommand(HIWORD(wParam), LOWORD(wParam), lParam));
+        case WM_HSCROLL:
+        case WM_VSCROLL:    return static_cast<INT_PTR>(OnScroll(reinterpret_cast<HWND>(lParam)));
+        case WM_COMMAND:
+            {
+                WORD hiWp = HIWORD(wParam);
+                UINT id = static_cast<UINT>(LOWORD(wParam));
+                if(lParam == 0)
+                {                                      // accelerator : menu
+                    return static_cast<INT_PTR>(hiWp ? FALSE : OnMenuCommand(id));
+                }
+                return static_cast<INT_PTR>(OnCommand(hiWp, id, reinterpret_cast<HWND>(lParam)));
+            }
         case WM_DESTROY:    return static_cast<INT_PTR>(OnDestroy());
     }
 
@@ -137,31 +151,48 @@ BOOL ConfigDialog::OnInitDialog()
     return TRUE; // return FALSE if setting focus ourselves
 }
 
-BOOL ConfigDialog::OnVScroll(LPARAM lParam)
+BOOL ConfigDialog::OnScroll(HWND hWnd)
 {
-    UINT id = static_cast<UINT>(::GetDlgCtrlID(reinterpret_cast<HWND>(lParam)));
+    UINT id = static_cast<UINT>(::GetDlgCtrlID(hWnd));
     if(IsOutputSliderId(id))
     {
         SaveOutputSliderPercentValue(id);
-        UpdateLabels();
+        UpdateOutputLabels();
+        return TRUE;
+    }
+    if(IsFreqSliderId(id))
+    {
+        LRESULT selectedFreqIndex = GetSelectedFreqIntervalIndex();
+
+        if(selectedFreqIndex != LB_ERR)
+        {
+            SaveFreqSliderValue(static_cast<size_t>(selectedFreqIndex), id);
+            UpdateFreqIntervalList();
+            UpdateFreqControls();
+            UpdateFreqLabels();
+        }
         return TRUE;
     }
 
     return FALSE;
 }
 
-BOOL ConfigDialog::OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam)
+BOOL ConfigDialog::OnCommand(WORD notificationCode, UINT controlId, HWND controlWnd)
 {
-    switch(wParamHi)
+    switch(notificationCode)
     {
         case BN_CLICKED:
-            OnButtonClicked(static_cast<UINT>(wParamLo), reinterpret_cast<HWND>(lParam));
-            break;
+            return OnButtonClicked(controlId, controlWnd);
+        case LBN_SELCHANGE:
+            return OnListboxSelectionChanged(controlId, controlWnd);
         default:
             return FALSE;
     }
+}
 
-    return TRUE;
+BOOL ConfigDialog::OnMenuCommand(UINT menuId)
+{
+    return FALSE;
 }
 
 BOOL ConfigDialog::OnButtonClicked(UINT buttonId, HWND buttonHandle)
@@ -178,11 +209,29 @@ BOOL ConfigDialog::OnButtonClicked(UINT buttonId, HWND buttonHandle)
         case IDC_BOTHRIGHT:
             SaveCenterDetectionMode();
             break;
+        case IDC_ADDFREQ:
+            AddFreqInterval();
+            break;
+        case IDC_DELFREQ:
+            DelFreqInterval();
+            break;
         default:
             return FALSE;
     }
 
     return TRUE;
+}
+
+BOOL ConfigDialog::OnListboxSelectionChanged(UINT listboxId, HWND listboxHandle)
+{
+    if(listboxId == IDC_FREQS)
+    {
+        UpdateFreqControls();
+        UpdateFreqLabels();
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 BOOL ConfigDialog::OnDestroy()
@@ -206,6 +255,8 @@ void ConfigDialog::Update(const void* origin)
         UpdateBypass();
         UpdateCenterDetectionMode();
         UpdateOutputSliders();
+        UpdateFreqIntervalList();
+        UpdateFreqControls();
         UpdateLabels();
     }
 }
@@ -221,9 +272,10 @@ void ConfigDialog::TryInitControlsWithValues()
     {
         UpdateBypass();
         UpdateOutputSliders();
-        UpdateLabels();
         UpdateCenterDetectionMode();
-        UpdateFreqSection();
+        UpdateFreqIntervalList();
+        UpdateFreqControls();
+        UpdateLabels();
     }
 }
 
@@ -271,7 +323,7 @@ int ConfigDialog::GetOutputSliderPercentValue(UINT sliderId)
     return GetVerticalSliderValue<int>(HDlg(), sliderId);
 }
 
-void ConfigDialog::UpdateLabels()
+void ConfigDialog::UpdateOutputLabels()
 {
     static auto& metadata = GetOutputSliderMetadata();
     BOOST_FOREACH(auto md, metadata)
@@ -283,6 +335,12 @@ void ConfigDialog::UpdateLabels()
 
         UpdateLabel(md.second->labelId, newValue);
     }
+}
+
+void ConfigDialog::UpdateLabels()
+{
+    UpdateOutputLabels();
+    UpdateFreqLabels();
 }
 
 void ConfigDialog::UpdateLabel(UINT id, const tstring& newValue)
@@ -469,7 +527,7 @@ bool ConfigDialog::IsFreqSliderId(UINT id)
     return metadata.find(id) != metadata.end();
 }
 
-void ConfigDialog::UpdateFreqSection()
+void ConfigDialog::UpdateFreqControls()
 {
     static auto& metadata = GetFreqSliderMetadata();
 
@@ -482,25 +540,17 @@ void ConfigDialog::UpdateFreqSection()
         BOOST_FOREACH(auto md, metadata)
         {
             EnableControl(md.first, false);
-            UpdateLabel(md.second->labelId, _T(""));
         }
     }
     else
     {
         EnableControl(IDC_DELFREQ, true);
-        size_t index = static_cast<size_t>(selectedFreqIndex);
         const core::FrequencyInterval& interval =
-            _model->GetCurrentEngineConfig().centerToSidesFrequencyIntervals()[index];
+            _model->GetCurrentEngineConfig().centerToSidesFrequencyIntervals()[static_cast<size_t>(selectedFreqIndex)];
 
         BOOST_FOREACH(auto md, metadata)
         {
-            EnableControl(md.first, true);
-
-            SetSliderRange<uint>(HDlg(), md.first, md.second->Minimum(interval), md.second->Maximum(interval));
-
-            uint value = CALL_MEMBER_FN(interval, md.second->getter)();
-            SetSliderPos<uint>(HDlg(), md.first, value);
-            UpdateFreqLabel(md.second->labelId, value);
+            UpdateFreqSlider(md.first, interval);
         }
     }
 }
@@ -510,13 +560,142 @@ LRESULT ConfigDialog::GetSelectedFreqIntervalIndex()
     return ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETCURSEL, static_cast<WPARAM>(0), static_cast<LPARAM>(0));
 }
 
+void ConfigDialog::UpdateFreqLabels()
+{
+    static auto& metadata = GetFreqSliderMetadata();
+    LRESULT selectedFreqIndex = GetSelectedFreqIntervalIndex();
+
+    if(selectedFreqIndex == LB_ERR)
+    {
+        BOOST_FOREACH(auto md, metadata)
+        {
+            UpdateLabel(md.second->labelId, _T(""));
+        }
+    }
+    else
+    {
+        const core::FrequencyInterval& interval =
+            _model->GetCurrentEngineConfig().centerToSidesFrequencyIntervals()[static_cast<size_t>(selectedFreqIndex)];
+        BOOST_FOREACH(auto md, metadata)
+        {
+            UpdateFreqLabel(md.second->labelId, CALL_MEMBER_FN(interval,  md.second->getter)());
+        }
+    }
+}
+
 void ConfigDialog::UpdateFreqLabel(UINT id, uint value)
+{
+    UpdateLabel(id, FormatFreq(value));
+}
+
+void ConfigDialog::UpdateFreqIntervalList()
+{
+    const core::FrequencyIntervalVector& intervals = _model->GetCurrentEngineConfig().centerToSidesFrequencyIntervals();
+    size_t displayedCount = static_cast<size_t>(::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETCOUNT, wZero, lZero));
+
+    if(displayedCount == intervals.size())
+    {
+        LRESULT selectedIndex = GetSelectedFreqIntervalIndex();
+        for(size_t i = 0; i < displayedCount; ++i)
+        {
+            WPARAM wIndex = static_cast<WPARAM>(i);
+
+            LRESULT len =
+                ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETTEXTLEN, wIndex, lZero);
+            boost::scoped_array<TCHAR> buffer(new TCHAR[len + 1]);
+            ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETTEXT, wIndex, reinterpret_cast<LPARAM>(buffer.get()));
+
+            tstring text(buffer.get());
+            tstring newText = FormatFreqInterval(intervals[i]);
+
+            if(text.compare(newText))
+            {
+                ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_DELETESTRING, wIndex, lZero);
+                ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_INSERTSTRING, wIndex, reinterpret_cast<LPARAM>(newText.c_str()));
+            }
+        }
+        ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_SETCURSEL, static_cast<WPARAM>(selectedIndex), lZero);
+    }
+    else
+    {
+        ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_SETCURSEL, static_cast<WPARAM>(-1), lZero);
+        while(::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETCOUNT, wZero, lZero))
+        {
+            ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_DELETESTRING, wZero, lZero);
+        }
+        for(size_t i = 0; i < intervals.size(); ++i)
+        {
+            WPARAM wIndex = static_cast<WPARAM>(i);
+            tstring text = FormatFreqInterval(intervals[i]);
+            ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_INSERTSTRING, wIndex, reinterpret_cast<LPARAM>(text.c_str()));
+        }
+    }
+}
+
+tstring ConfigDialog::FormatFreq(uint value)
 {
     tstringstream buffer;
     buffer << value << _T("Hz");
-    tstring newValue = buffer.str();
+    return buffer.str();
+}
 
-    UpdateLabel(id, newValue);
+tstring ConfigDialog::FormatFreqInterval(const core::FrequencyInterval& interval)
+{
+    tstringstream buffer;
+    buffer << FormatFreq(interval.minimum()) << _T(" - ") << FormatFreq(interval.maximum());
+    return buffer.str();
+}
+
+void ConfigDialog::UpdateFreqSlider(UINT id, const core::FrequencyInterval& interval)
+{
+    static auto& metadata = GetFreqSliderMetadata();
+    EnableControl(id, true);
+    SetSliderRange<uint>(HDlg(), id, metadata[id].Minimum(interval), metadata[id].Maximum(interval));
+    SetSliderPos<uint>(HDlg(), id, CALL_MEMBER_FN(interval, metadata[id].getter)());
+}
+
+void ConfigDialog::AddFreqInterval()
+{
+    _controller->AddFreqInterval(this);
+    UpdateFreqIntervalList();
+    ::SendDlgItemMessage(
+        HDlg(), IDC_FREQS, LB_SETCURSEL,
+        static_cast<WPARAM>(::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETCOUNT, wZero, lZero) - 1),
+        lZero);
+    UpdateFreqControls();
+    UpdateFreqLabels();
+}
+
+void ConfigDialog::DelFreqInterval()
+{
+    LRESULT selectedIndex = GetSelectedFreqIntervalIndex();
+    if(selectedIndex != LB_ERR)
+    {
+        _controller->RemoveFreqInterval(static_cast<size_t>(selectedIndex), this);
+        UpdateFreqIntervalList();
+
+        LRESULT displayCount = ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETCOUNT, wZero, lZero);
+        if(displayCount > 0)
+        {
+            if(selectedIndex >= displayCount)
+            {
+                selectedIndex = displayCount - 1;
+            }
+            ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_SETCURSEL, static_cast<WPARAM>(selectedIndex), lZero);
+        }
+
+        UpdateFreqControls();
+        UpdateFreqLabels();
+    }
+}
+
+void ConfigDialog::SaveFreqSliderValue(size_t freqIntervalIndex, UINT sliderId)
+{
+    if(IsBackendReady())
+    {
+        CALL_MEMBER_FN(*_controller,
+            GetFreqSliderMetadata()[sliderId].setter)(freqIntervalIndex, GetSliderPos<uint>(HDlg(), sliderId), this);
+    }
 }
 
 ConfigDialog::FreqSliderMetadata::FreqSliderMetadata()

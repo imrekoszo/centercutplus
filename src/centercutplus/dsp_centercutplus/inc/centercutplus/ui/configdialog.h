@@ -83,9 +83,11 @@ class DSP_CENTERCUTPLUS_API ConfigDialog : public Dialog, public configuration::
 
   private:
     BOOL OnInitDialog();
-    BOOL OnVScroll(LPARAM lParam);
-    BOOL OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam);
+    BOOL OnScroll(HWND hWnd);
+    BOOL OnCommand(WORD notificationCode, UINT controlId, HWND controlWnd);
+    BOOL OnMenuCommand(UINT menuId);
     BOOL OnButtonClicked(UINT buttonId, HWND buttonHandle);
+    BOOL OnListboxSelectionChanged(UINT listboxId, HWND listboxHandle);
     BOOL OnDestroy();
     bool IsBackendReady();
     void TryInitControlsWithValues();
@@ -95,6 +97,7 @@ class DSP_CENTERCUTPLUS_API ConfigDialog : public Dialog, public configuration::
     void SaveOutputSliderPercentValue(UINT sliderId);
     int GetOutputSliderPercentValue(UINT sliderId);
     void UpdateLabels();
+    void UpdateOutputLabels();
     void UpdateLabel(UINT id, const tstring& newValue);
     void UpdateBypass();
     void SaveBypass();
@@ -107,9 +110,17 @@ class DSP_CENTERCUTPLUS_API ConfigDialog : public Dialog, public configuration::
     static boost::ptr_map<UINT, ConfigDialog::FreqSliderMetadata>& GetFreqSliderMetadata();
     static boost::ptr_map<UINT, FreqSliderMetadata>& InitFreqSliderMetadata();
     static bool IsFreqSliderId(UINT id);
-    void UpdateFreqSection();
+    void UpdateFreqControls();
     LRESULT GetSelectedFreqIntervalIndex();
+    void UpdateFreqLabels();
     void UpdateFreqLabel(UINT id, uint value);
+    void UpdateFreqIntervalList();
+    tstring FormatFreq(uint value);
+    tstring FormatFreqInterval(const core::FrequencyInterval& interval);
+    void UpdateFreqSlider(UINT id, const core::FrequencyInterval& interval);
+    void AddFreqInterval();
+    void DelFreqInterval();
+    void SaveFreqSliderValue(size_t freqIntervalIndex, UINT sliderId);
 
     // data
   private:
