@@ -11,7 +11,7 @@ namespace ccp
 namespace ui
 {
 
-class CENTERCUTPLUSUI_API Dialog
+class DSP_CENTERCUTPLUS_API Dialog
 {
     // ctor
   public:
@@ -30,7 +30,8 @@ class CENTERCUTPLUSUI_API Dialog
     bool IsWindow() const { return ::IsWindow(HDlg()) == TRUE; }
 
   protected:
-    virtual INT_PTR WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
+    virtual INT_PTR DlgProc(UINT message, WPARAM wParam, LPARAM lParam);
+    void EnableControl(UINT idControl, bool enable);
 
   private:
     static std::set<Dialog*>& Instances()
@@ -38,7 +39,7 @@ class CENTERCUTPLUSUI_API Dialog
         static std::set<Dialog*> instances;
         return instances;
     }
-    static INT_PTR CALLBACK _WindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+    static INT_PTR CALLBACK _DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
     static Dialog* TryGetDialogInstance(HWND hDlg, UINT message, LPARAM lParam);
     void StoreCreateInfo(HINSTANCE hInst, HWND hParentWnd);
     void TryPostProcessDestroy(UINT message);

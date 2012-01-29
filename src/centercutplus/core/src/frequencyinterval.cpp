@@ -8,9 +8,14 @@ namespace core
 const uint FrequencyInterval::kMinFrequency = 20u;
 const uint FrequencyInterval::kMaxFrequency = 20000u;
 
+namespace
+{
+const uint startingFrequency = 300u;
+}
+
 FrequencyInterval::FrequencyInterval()
-    : _min(kMinFrequency),
-      _max(kMaxFrequency)
+    : _min(startingFrequency),
+      _max(startingFrequency)
 {
 }
 

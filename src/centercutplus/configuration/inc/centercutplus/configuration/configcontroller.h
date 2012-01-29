@@ -5,6 +5,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
 
+#include <centercutplus/common/types.h>
+
 namespace ccp
 {
 
@@ -40,6 +42,10 @@ class ConfigController : boost::noncopyable
     void SetLeftToRightPercent(int value, const void* origin = NULL);
     void SetCenterToRightPercent(int value, const void* origin = NULL);
     void SetRightToRightPercent(int value, const void* origin = NULL);
+    void AddFreqInterval(const void* origin = NULL);
+    void RemoveFreqInterval(size_t index, const void* origin = NULL);
+    void SetFreqMin(size_t index, uint value, const void* origin = NULL);
+    void SetFreqMax(size_t index, uint value, const void* origin = NULL);
 
     // data
   private:

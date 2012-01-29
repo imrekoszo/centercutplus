@@ -2,6 +2,7 @@
 
 #include <set>
 
+#include <centercutplus/common/types.h>
 #include <centercutplus/core/centerdetectionmode.h>
 
 #include "../inc/centercutplus/configuration/iconfigviewmodel.h"
@@ -43,6 +44,10 @@ class ConfigModel : public IConfigViewModel
     void SetLeftToRightPercent(int value, const void* origin);
     void SetCenterToRightPercent(int value, const void* origin);
     void SetRightToRightPercent(int value, const void* origin);
+    void AddFreqInterval(const void* origin);
+    void RemoveFreqInterval(size_t index, const void* origin);
+    void SetFreqMin(size_t index, uint value, const void* origin);
+    void SetFreqMax(size_t index, uint value, const void* origin);
 
   private:
     void UpdateViews(const void* origin);

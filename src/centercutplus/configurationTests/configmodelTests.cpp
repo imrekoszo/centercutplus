@@ -206,3 +206,70 @@ BEGIN_TEST(SetCenterToRightPercentTest)
     WIN_ASSERT_EQUAL(view.get(), view->Origin);
 }
 END_TEST
+
+BEGIN_TEST(AddFreqIntervalTest)
+{
+    // arrange
+    Setup();
+
+    // act
+    sut->AddFreqInterval(view.get());
+
+    // assert
+    WIN_ASSERT_EQUAL(1, config->engineConfig().centerToSidesFrequencyIntervals().size());
+    WIN_ASSERT_TRUE(view->Updated);
+    WIN_ASSERT_EQUAL(view.get(), view->Origin);
+}
+END_TEST
+
+BEGIN_TEST(RemoveFreqIntervalTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+
+    // act
+    sut->RemoveFreqInterval(0, view.get());
+
+    // assert
+    WIN_ASSERT_EQUAL(0, config->engineConfig().centerToSidesFrequencyIntervals().size());
+    WIN_ASSERT_TRUE(view->Updated);
+    WIN_ASSERT_EQUAL(view.get(), view->Origin);
+}
+END_TEST
+
+BEGIN_TEST(SetFreqMinTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    ccp::uint newMin = Random::Uint(ccp::core::FrequencyInterval::kMinFrequency,
+                                    config->engineConfig().centerToSidesFrequencyIntervals()[0].maximum());
+
+    // act
+    sut->SetFreqMin(0, newMin, view.get());
+
+    // assert
+    WIN_ASSERT_EQUAL(newMin, config->engineConfig().centerToSidesFrequencyIntervals()[0].minimum());
+    WIN_ASSERT_TRUE(view->Updated);
+    WIN_ASSERT_EQUAL(view.get(), view->Origin);
+}
+END_TEST
+
+BEGIN_TEST(SetFreqMaxTest)
+{
+    // arrange
+    Setup();
+    config->engineConfig().centerToSidesFrequencyIntervals().push_back(new ccp::core::FrequencyInterval());
+    ccp::uint newMax = Random::Uint(config->engineConfig().centerToSidesFrequencyIntervals()[0].minimum(),
+                                    ccp::core::FrequencyInterval::kMaxFrequency);
+
+    // act
+    sut->SetFreqMax(0, newMax, view.get());
+
+    // assert
+    WIN_ASSERT_EQUAL(newMax, config->engineConfig().centerToSidesFrequencyIntervals()[0].maximum());
+    WIN_ASSERT_TRUE(view->Updated);
+    WIN_ASSERT_EQUAL(view.get(), view->Origin);
+}
+END_TEST

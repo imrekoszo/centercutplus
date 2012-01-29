@@ -13,6 +13,7 @@ namespace ccp
 namespace core
 {
 class EngineConfig;
+class FrequencyInterval;
 }
 namespace configuration
 {
@@ -22,7 +23,7 @@ class IConfigViewModel;
 namespace ui
 {
 
-class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IConfigView
+class DSP_CENTERCUTPLUS_API ConfigDialog : public Dialog, public configuration::IConfigView
 {
     // typedefs
   private:
@@ -42,6 +43,33 @@ class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IC
         }
     };
 
+    typedef uint (core::FrequencyInterval::*GetFreqMemFn)() const;
+    typedef void (configuration::ConfigController::*SetFreqMemFn)(size_t, uint, const void*);
+    struct FreqSliderMetadata
+    {
+        // data
+      public:
+        GetFreqMemFn getter;
+        SetFreqMemFn setter;
+        UINT labelId;
+      private:
+        GetFreqMemFn _getMin;
+        GetFreqMemFn _getMax;
+        uint _min;
+        uint _max;
+
+        // ctor
+      public:
+        FreqSliderMetadata();
+        FreqSliderMetadata(GetFreqMemFn getter, SetFreqMemFn setter, UINT labelId, GetFreqMemFn getMin, uint max);
+        FreqSliderMetadata(GetFreqMemFn getter, SetFreqMemFn setter, UINT labelId, uint min, GetFreqMemFn getMax);
+
+        // methods
+      public:
+        uint Minimum(const core::FrequencyInterval& interval);
+        uint Maximum(const core::FrequencyInterval& interval);
+    };
+
     // ctor
   public:
     ConfigDialog();
@@ -49,15 +77,16 @@ class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IC
 
     // methods
   public:
-    INT_PTR WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
+    INT_PTR DlgProc(UINT message, WPARAM wParam, LPARAM lParam);
     void Update(const void* origin);
     void SetController(configuration::ConfigController& controller);
 
   private:
-    void OnInitDialog();
-    void OnVScroll(LPARAM lParam);
-    void OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam);
-    void OnButtonClicked(UINT buttonId, HWND buttonHandle);
+    BOOL OnInitDialog();
+    BOOL OnVScroll(LPARAM lParam);
+    BOOL OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam);
+    BOOL OnButtonClicked(UINT buttonId, HWND buttonHandle);
+    BOOL OnDestroy();
     bool IsBackendReady();
     void TryInitControlsWithValues();
     void TryUnsubscribe();
@@ -75,6 +104,12 @@ class CENTERCUTPLUSUI_API ConfigDialog : public Dialog, public configuration::IC
     static boost::ptr_map<UINT, ConfigDialog::OutputSliderMetadata>& GetOutputSliderMetadata();
     static boost::ptr_map<UINT, OutputSliderMetadata>& InitOutputSliderMetadata();
     static bool IsOutputSliderId(UINT id);
+    static boost::ptr_map<UINT, ConfigDialog::FreqSliderMetadata>& GetFreqSliderMetadata();
+    static boost::ptr_map<UINT, FreqSliderMetadata>& InitFreqSliderMetadata();
+    static bool IsFreqSliderId(UINT id);
+    void UpdateFreqSection();
+    LRESULT GetSelectedFreqIntervalIndex();
+    void UpdateFreqLabel(UINT id, uint value);
 
     // data
   private:

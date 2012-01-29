@@ -1,9 +1,9 @@
 #pragma once
 
-#ifdef CENTERCUTPLUSUI_EXPORTS
-#define CENTERCUTPLUSUI_API __declspec(dllexport)
+#ifdef DSP_CENTERCUTPLUS_EXPORTS
+#define DSP_CENTERCUTPLUS_API __declspec(dllexport)
 #else
-#define CENTERCUTPLUSUI_API __declspec(dllimport)
+#define DSP_CENTERCUTPLUS_API __declspec(dllimport)
 #endif
 
 // A macro to disallow the copy constructor and operator= functions

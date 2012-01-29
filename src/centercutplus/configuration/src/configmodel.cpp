@@ -91,6 +91,42 @@ void ConfigModel::SetRightToRightPercent(int value, const void* origin)
     UpdateViews(origin);
 }
 
+void ConfigModel::AddFreqInterval(const void* origin)
+{
+    _liveConfig.engineConfig().centerToSidesFrequencyIntervals().push_back(new core::FrequencyInterval());
+    UpdateViews(origin);
+}
+
+void ConfigModel::RemoveFreqInterval(size_t index, const void* origin)
+{
+    core::FrequencyIntervalVector& intervals = _liveConfig.engineConfig().centerToSidesFrequencyIntervals();
+    if(index < intervals.size())
+    {
+        intervals.erase(intervals.begin() + index);
+        UpdateViews(origin);
+    }
+}
+
+void ConfigModel::SetFreqMin(size_t index, uint value, const void* origin)
+{
+    core::FrequencyIntervalVector& intervals = _liveConfig.engineConfig().centerToSidesFrequencyIntervals();
+    if(index < intervals.size())
+    {
+        intervals[index].minimum(value);
+        UpdateViews(origin);
+    }
+}
+
+void ConfigModel::SetFreqMax(size_t index, uint value, const void* origin)
+{
+    core::FrequencyIntervalVector& intervals = _liveConfig.engineConfig().centerToSidesFrequencyIntervals();
+    if(index < intervals.size())
+    {
+        intervals[index].maximum(value);
+        UpdateViews(origin);
+    }
+}
+
 void ConfigModel::UpdateViews(const void* origin)
 {
     BOOST_FOREACH(IConfigView* view, _views)

@@ -75,5 +75,25 @@ void ConfigController::SetRightToRightPercent(int value, const void* origin)
     _impl->_model.SetRightToRightPercent(value, origin);
 }
 
+void ConfigController::AddFreqInterval(const void* origin)
+{
+    _impl->_model.AddFreqInterval(origin);
+}
+
+void ConfigController::RemoveFreqInterval(size_t index, const void* origin)
+{
+    _impl->_model.RemoveFreqInterval(index, origin);
+}
+
+void ConfigController::SetFreqMin(size_t index, uint value, const void* origin)
+{
+    _impl->_model.SetFreqMin(index, value, origin);
+}
+
+void ConfigController::SetFreqMax(size_t index, uint value, const void* origin)
+{
+    _impl->_model.SetFreqMax(index, value, origin);
+}
+
 }
 }

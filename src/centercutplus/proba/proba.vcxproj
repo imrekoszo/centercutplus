@@ -49,7 +49,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\centercutplusui\inc;$(ProjectDir)..\core\inc;$(ProjectDir)..\common\inc;$(ProjectDir)..\configuration\inc;$(ProjectDir)..\wrapper\inc;$(ProjectDir)..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\dsp_centercutplus\inc;$(ProjectDir)..\core\inc;$(ProjectDir)..\common\inc;$(ProjectDir)..\configuration\inc;$(ProjectDir)..\wrapper\inc;$(ProjectDir)..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -64,7 +64,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\centercutplusui\inc;$(ProjectDir)..\core\inc;$(ProjectDir)..\common\inc;$(ProjectDir)..\configuration\inc;$(ProjectDir)..\wrapper\inc;$(ProjectDir)..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\dsp_centercutplus\inc;$(ProjectDir)..\core\inc;$(ProjectDir)..\common\inc;$(ProjectDir)..\configuration\inc;$(ProjectDir)..\wrapper\inc;$(ProjectDir)..\..\..\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,14 +88,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\centercutplusui\centercutplusui.vcxproj">
-      <Project>{e7d7b250-bf9c-49ed-b203-072ea6d8cce4}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\configuration\configuration.vcxproj">
       <Project>{8eb8955e-db3e-4135-a70e-2da140d3722f}</Project>
     </ProjectReference>
     <ProjectReference Include="..\core\core.vcxproj">
       <Project>{b9d92d13-3f93-4c38-a3ea-5da143f2607f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\dsp_centercutplus\dsp_centercutplus.vcxproj">
+      <Project>{e7d7b250-bf9c-49ed-b203-072ea6d8cce4}</Project>
     </ProjectReference>
     <ProjectReference Include="..\wrapper\wrapper.vcxproj">
       <Project>{8b96409e-1f51-4338-9ac5-f713bdfb9684}</Project>

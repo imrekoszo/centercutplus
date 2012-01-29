@@ -58,6 +58,12 @@ T GetSliderPos(HWND hDlg, UINT sliderId)
 }
 
 template<typename T>
+void SetSliderPos(HWND hDlg, UINT sliderId, T pos)
+{
+    ::SendDlgItemMessage(hDlg, sliderId, TBM_SETPOS, static_cast<WPARAM>(TRUE), static_cast<LPARAM>(pos));
+}
+
+template<typename T>
 void InitVerticalSlider(HWND hDlg, UINT sliderId, T min, T max)
 {
     SetSliderRange<T>(hDlg, sliderId, min, max);
@@ -109,64 +115,56 @@ ConfigDialog::~ConfigDialog()
     TryUnsubscribe();
 }
 
-INT_PTR ConfigDialog::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR ConfigDialog::DlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
-    INT_PTR baseResult = Dialog::WindowProc(message, wParam, lParam);
+    INT_PTR baseResult = Dialog::DlgProc(message, wParam, lParam);
 
     switch(message)
     {
-        case WM_INITDIALOG:
-            OnInitDialog();
-            break;
-        case WM_VSCROLL:
-            OnVScroll(lParam);
-            break;
-        case WM_COMMAND:
-            OnCommand(HIWORD(wParam), LOWORD(wParam), lParam);
-            break;
-        case WM_DESTROY:
-            TryUnsubscribe();
-            break;
+        case WM_INITDIALOG: return static_cast<INT_PTR>(OnInitDialog());
+        case WM_VSCROLL:    return static_cast<INT_PTR>(OnVScroll(lParam));
+        case WM_COMMAND:    return static_cast<INT_PTR>(OnCommand(HIWORD(wParam), LOWORD(wParam), lParam));
+        case WM_DESTROY:    return static_cast<INT_PTR>(OnDestroy());
     }
 
     return baseResult;
 }
 
-void ConfigDialog::SetController(configuration::ConfigController& controller)
-{
-    _controller = &controller;
-    _model = _controller->Model();
-    _model->Subscribe(*this);
-    TryInitControlsWithValues();
-}
-
-void ConfigDialog::OnInitDialog()
+BOOL ConfigDialog::OnInitDialog()
 {
     InitOutputSliders();
     TryInitControlsWithValues();
+    return TRUE; // return FALSE if setting focus ourselves
 }
 
-void ConfigDialog::OnVScroll(LPARAM lParam)
+BOOL ConfigDialog::OnVScroll(LPARAM lParam)
 {
     UINT id = static_cast<UINT>(::GetDlgCtrlID(reinterpret_cast<HWND>(lParam)));
     if(IsOutputSliderId(id))
     {
         SaveOutputSliderPercentValue(id);
         UpdateLabels();
+        return TRUE;
     }
+
+    return FALSE;
 }
 
-void ConfigDialog::OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam)
+BOOL ConfigDialog::OnCommand(WORD wParamHi, WORD wParamLo, LPARAM lParam)
 {
     switch(wParamHi)
     {
         case BN_CLICKED:
             OnButtonClicked(static_cast<UINT>(wParamLo), reinterpret_cast<HWND>(lParam));
             break;
+        default:
+            return FALSE;
     }
+
+    return TRUE;
 }
 
-void ConfigDialog::OnButtonClicked(UINT buttonId, HWND buttonHandle)
+BOOL ConfigDialog::OnButtonClicked(UINT buttonId, HWND buttonHandle)
 {
     switch(buttonId)
     {
@@ -180,7 +178,25 @@ void ConfigDialog::OnButtonClicked(UINT buttonId, HWND buttonHandle)
         case IDC_BOTHRIGHT:
             SaveCenterDetectionMode();
             break;
+        default:
+            return FALSE;
     }
+
+    return TRUE;
+}
+
+BOOL ConfigDialog::OnDestroy()
+{
+    TryUnsubscribe();
+    return TRUE;
+}
+
+void ConfigDialog::SetController(configuration::ConfigController& controller)
+{
+    _controller = &controller;
+    _model = _controller->Model();
+    _model->Subscribe(*this);
+    TryInitControlsWithValues();
 }
 
 void ConfigDialog::Update(const void* origin)
@@ -188,9 +204,9 @@ void ConfigDialog::Update(const void* origin)
     if(origin != this)
     {
         UpdateBypass();
+        UpdateCenterDetectionMode();
         UpdateOutputSliders();
         UpdateLabels();
-        UpdateCenterDetectionMode();
     }
 }
 
@@ -207,6 +223,7 @@ void ConfigDialog::TryInitControlsWithValues()
         UpdateOutputSliders();
         UpdateLabels();
         UpdateCenterDetectionMode();
+        UpdateFreqSection();
     }
 }
 
@@ -415,6 +432,132 @@ bool ConfigDialog::IsOutputSliderId(UINT id)
 {
     static auto& metadata = GetOutputSliderMetadata();
     return metadata.find(id) != metadata.end();
+}
+
+boost::ptr_map<UINT, ConfigDialog::FreqSliderMetadata>& ConfigDialog::GetFreqSliderMetadata()
+{
+    static auto& metadata = InitFreqSliderMetadata();
+    return metadata;
+}
+
+boost::ptr_map<UINT, ConfigDialog::FreqSliderMetadata>& ConfigDialog::InitFreqSliderMetadata()
+{
+    static boost::ptr_map<UINT, ConfigDialog::FreqSliderMetadata> metadata;
+
+    UINT key = IDC_FROM;
+    metadata.insert(key,
+                    new ConfigDialog::FreqSliderMetadata(&core::FrequencyInterval::minimum,
+                                                         &configuration::ConfigController::SetFreqMin,
+                                                         IDC_FROML,
+                                                         core::FrequencyInterval::kMinFrequency,
+                                                         &core::FrequencyInterval::maximum));
+
+    key = IDC_TO;
+    metadata.insert(key,
+                    new ConfigDialog::FreqSliderMetadata(&core::FrequencyInterval::maximum,
+                                                         &configuration::ConfigController::SetFreqMax,
+                                                         IDC_TOL,
+                                                         &core::FrequencyInterval::minimum,
+                                                         core::FrequencyInterval::kMaxFrequency));
+
+    return metadata;
+}
+
+bool ConfigDialog::IsFreqSliderId(UINT id)
+{
+    static auto& metadata = GetFreqSliderMetadata();
+    return metadata.find(id) != metadata.end();
+}
+
+void ConfigDialog::UpdateFreqSection()
+{
+    static auto& metadata = GetFreqSliderMetadata();
+
+    LRESULT selectedFreqIndex = GetSelectedFreqIntervalIndex();
+
+    if(selectedFreqIndex == LB_ERR)
+    {
+        EnableControl(IDC_DELFREQ, false);
+
+        BOOST_FOREACH(auto md, metadata)
+        {
+            EnableControl(md.first, false);
+            UpdateLabel(md.second->labelId, _T(""));
+        }
+    }
+    else
+    {
+        EnableControl(IDC_DELFREQ, true);
+        size_t index = static_cast<size_t>(selectedFreqIndex);
+        const core::FrequencyInterval& interval =
+            _model->GetCurrentEngineConfig().centerToSidesFrequencyIntervals()[index];
+
+        BOOST_FOREACH(auto md, metadata)
+        {
+            EnableControl(md.first, true);
+
+            SetSliderRange<uint>(HDlg(), md.first, md.second->Minimum(interval), md.second->Maximum(interval));
+
+            uint value = CALL_MEMBER_FN(interval, md.second->getter)();
+            SetSliderPos<uint>(HDlg(), md.first, value);
+            UpdateFreqLabel(md.second->labelId, value);
+        }
+    }
+}
+
+LRESULT ConfigDialog::GetSelectedFreqIntervalIndex()
+{
+    return ::SendDlgItemMessage(HDlg(), IDC_FREQS, LB_GETCURSEL, static_cast<WPARAM>(0), static_cast<LPARAM>(0));
+}
+
+void ConfigDialog::UpdateFreqLabel(UINT id, uint value)
+{
+    tstringstream buffer;
+    buffer << value << _T("Hz");
+    tstring newValue = buffer.str();
+
+    UpdateLabel(id, newValue);
+}
+
+ConfigDialog::FreqSliderMetadata::FreqSliderMetadata()
+    : getter(NULL),
+      setter(NULL),
+      labelId(0u),
+      _getMin(NULL),
+      _max(0u),
+      _min(0u),
+      _getMax(NULL)
+{
+}
+
+ConfigDialog::FreqSliderMetadata::FreqSliderMetadata(
+    ConfigDialog::GetFreqMemFn getter,
+    ConfigDialog::SetFreqMemFn setter,
+    UINT labelId,
+    ConfigDialog::GetFreqMemFn getMin,
+    uint max)
+    : getter(getter), setter(setter), labelId(labelId), _getMin(getMin), _max(max), _min(0u), _getMax(NULL)
+{
+}
+
+ConfigDialog::FreqSliderMetadata::FreqSliderMetadata(
+    ConfigDialog::GetFreqMemFn getter,
+    ConfigDialog::SetFreqMemFn setter,
+    UINT labelId,
+    uint min,
+    ConfigDialog::GetFreqMemFn getMax)
+    : getter(getter), setter(setter), labelId(labelId), _min(min), _getMax(getMax), _getMin(NULL), _max(0u)
+{
+}
+
+uint ConfigDialog::FreqSliderMetadata::Minimum(const core::FrequencyInterval& interval)
+{
+    return _getMin ? CALL_MEMBER_FN(interval, _getMin)() : _min;
+}
+
+uint ConfigDialog::FreqSliderMetadata::Maximum(const core::FrequencyInterval& interval)
+{
+    return _getMax ? CALL_MEMBER_FN(interval, _getMax)() : _max;
 }
 
 }

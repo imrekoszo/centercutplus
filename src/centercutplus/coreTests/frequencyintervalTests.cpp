@@ -21,6 +21,18 @@ void ResetSut()
 
 }
 
+BEGIN_TEST(Should_start_with_empty_interval)
+{
+    // arrange
+    FrequencyInterval localSut;
+
+    // act
+
+    // assert
+    WIN_ASSERT_EQUAL(localSut.minimum(), localSut.maximum());
+}
+END_TEST
+
 BEGIN_TEST(Should_sanitize_max_against_max_frequency)
 {
     // arrange

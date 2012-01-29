@@ -52,7 +52,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="src\centercutplusui.rc">
+    <ResourceCompile Include="src\dsp_centercutplus.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

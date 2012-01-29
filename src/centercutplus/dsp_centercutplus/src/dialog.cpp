@@ -26,7 +26,7 @@ void Dialog::Create(HINSTANCE hInst, HWND hParentWnd)
     ::CreateDialogParam(_hInstance,
                         MAKEINTRESOURCE(_idd),
                         _hParentWnd,
-                        _WindowProc,
+                        _DlgProc,
                         reinterpret_cast<LPARAM>(this));
 }
 
@@ -41,7 +41,7 @@ INT_PTR Dialog::DoModal(HINSTANCE hInst, HWND hParentWnd)
     return ::DialogBoxParam(_hInstance,
                             MAKEINTRESOURCE(_idd),
                             _hParentWnd,
-                            _WindowProc,
+                            _DlgProc,
                             reinterpret_cast<LPARAM>(this));
 }
 
@@ -50,18 +50,18 @@ BOOL Dialog::End(INT_PTR result)
     return ::IsWindow(_hDlg) ? ::EndDialog(_hDlg, result) : FALSE;
 }
 
-INT_PTR Dialog::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR Dialog::DlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
     return static_cast<INT_PTR>(FALSE);
 }
 
-INT_PTR CALLBACK Dialog::_WindowProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK Dialog::_DlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     Dialog* instance = TryGetDialogInstance(hDlg, message, lParam);
 
     if(instance != NULL)
     {
-        INT_PTR result = instance->WindowProc(message, wParam, lParam);
+        INT_PTR result = instance->DlgProc(message, wParam, lParam);
         instance->TryPostProcessDestroy(message);
         return result;
     }
@@ -103,6 +103,14 @@ void Dialog::TryPostProcessDestroy(UINT message)
     if(message == WM_DESTROY)
     {
         Dialog::Instances().erase(this);
+    }
+}
+
+void Dialog::EnableControl(UINT idControl, bool enable)
+{
+    if(IsWindow())
+    {
+        ::EnableWindow(::GetDlgItem(HDlg(), idControl), enable ? TRUE : FALSE);
     }
 }
 
