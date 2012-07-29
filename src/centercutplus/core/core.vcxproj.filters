@@ -33,6 +33,15 @@
     <ClInclude Include="inc\centercutplus\core\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fhtengine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\centercutengine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\frequencyinterval.cpp">
@@ -42,6 +51,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fhtengine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

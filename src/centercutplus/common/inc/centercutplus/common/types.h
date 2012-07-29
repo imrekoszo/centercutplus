@@ -9,6 +9,7 @@ namespace ccp
 {
 
 typedef unsigned int        uint;
+typedef unsigned char       byte;
 
 //typedef signed __int64      slong;
 //typedef unsigned __int64    ulong;

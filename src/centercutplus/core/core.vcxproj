@@ -77,10 +77,15 @@
     <ClInclude Include="inc\centercutplus\core\engineconfig.h" />
     <ClInclude Include="inc\centercutplus\core\frequencyinterval.h" />
     <ClInclude Include="inc\centercutplus\core\types.h" />
+    <ClInclude Include="src\centercutengine.h" />
+    <ClInclude Include="src\core.h" />
+    <ClInclude Include="src\fhtengine.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\config.cpp" />
+    <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\engineconfig.cpp" />
+    <ClCompile Include="src\fhtengine.cpp" />
     <ClCompile Include="src\frequencyinterval.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
